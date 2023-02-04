@@ -50,7 +50,7 @@ GrandMa :: struct {
 
 ChatBubble :: struct{
   using imageData: 	ImageData,
-  shouldShow: 		bool,
+  dialogueIndex: 	i32,
 }
 
 Plant :: struct {
@@ -70,7 +70,7 @@ ColorFade :: struct {
 
 DialogueSegment :: struct {
 	text: 		string,
-	timerShow: 	f32,
+	timerText: 	f32,
 }
 
 gui: GUI
@@ -78,14 +78,14 @@ ground: 			Ground
 character_player: 	CharacterPlayer
 grandma: 	GrandMa
 plant1: 			Plant
-chat_bl: 			ChatBubble
+chat_br: 			ChatBubble
 screenFade: 		ColorFade
 screenFadeColor:	raylib.Color
 height: 	i32
 width: 		i32
 timerInputCooldown:			f32
 
-//dialogue1: [5]string{"Um", "", 3, 4, 5}
+dialogue1: [4]DialogueSegment
 
 
 main :: proc () {
@@ -111,6 +111,8 @@ main :: proc () {
 		defer raylib.UnloadImage(plant_image)
 		chat_bottom_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_left.png")
 		defer raylib.UnloadImage(chat_bottom_left_image)
+		chat_bottom_right_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_right.png")
+		defer raylib.UnloadImage(chat_bottom_right_image)
 		chat_top_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_top_left.png")
 		defer raylib.UnloadImage(chat_top_left_image)
 
@@ -118,13 +120,13 @@ main :: proc () {
 		ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&plant1, &plant_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&chat_bl, &chat_bottom_left_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, StandardDimensionsX, StandardDimensionsY)
 	}
 	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
 	defer raylib.UnloadTexture(grandma.texture)
 	defer raylib.UnloadTexture(plant1.texture)
-	defer raylib.UnloadTexture(chat_bl.texture)
+	defer raylib.UnloadTexture(chat_br.texture)
 	{	
 		// Setup gui
 		gui.color = raylib.WHITE
@@ -132,8 +134,9 @@ main :: proc () {
 		// Starting positions
 		ground.centerPosition = raylib.Vector2{(cast(f32)(width/2)), (cast(f32)(height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(width/2) - character_player.size.x/2), (cast(f32)(height/2) - character_player.size.y/2)}
-		grandma.centerPosition = raylib.Vector2{cast(f32)(width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2)}
+		grandma.centerPosition = raylib.Vector2{cast(f32)(width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
 		plant1.centerPosition = raylib.Vector2{cast(f32)(plant1.size.x/2), cast(f32)(plant1.size.y/2)}
+		chat_br.centerPosition = raylib.Vector2{grandma.centerPosition.x - 75, grandma.centerPosition.y-80}
 		// Setup input
 		character_player.input = InputScheme{
 			.W,
@@ -144,6 +147,9 @@ main :: proc () {
 		}
 		// Setup screen fade
 		screenFade = MakeColorFade(3, raylib.BLACK, raylib.Color{1,1,1,0})
+		// Setup dialogue
+		chat_br.dialogueIndex = -1
+		dialogue1[0] = DialogueSegment{text="Um...", timerText=3}
 	}
 
 	for !raylib.WindowShouldClose() {
@@ -165,8 +171,16 @@ Update :: proc (deltaTime:f32) {
 		t := screenFade.timerScreenFade/ screenFade.initialTime
 		screenFadeColor = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
 	}else{
-			// Show first dialogue
-			chat_bl.shouldShow = true;
+		// Show first dialogue
+		chat_br.dialogueIndex = 0;
+	}
+	if(chat_br.dialogueIndex >= 0){
+		if HasHitTime(&dialogue1[chat_br.dialogueIndex].timerText, deltaTime) {
+			chat_br.dialogueIndex = chat_br.dialogueIndex + 1
+			if(chat_br.dialogueIndex >= len(dialogue1)) { 
+				fmt.println("We bout to crash arent we?")
+			}
+		}
 	}
 	if HasHitTime(&timerInputCooldown, deltaTime) {
 		if(raylib.IsKeyDown(character_player.upButton)){
@@ -223,10 +237,10 @@ Draw :: proc () {
 		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
 	}
 	{	// Chat bubble
-		if(chat_bl.shouldShow){
-  			local_scope_color(raylib.BLACK)
-			if(GUI_DrawSpeechBubble(chat_bl, "Hi!")){
-				fmt.println("Hellope!")
+		if(chat_br.dialogueIndex >= 0){
+			if(dialogue1[chat_br.dialogueIndex].timerText > 0) {
+  				local_scope_color(raylib.BLACK)
+				GUI_DrawSpeechBubble(chat_br, dialogue1[chat_br.dialogueIndex].text)
 			}
 		}
 	}
@@ -243,6 +257,13 @@ Draw :: proc () {
 	{	// Screen Fade
 		if(screenFade.timerScreenFade > 0){
 			raylib.DrawRectangle(0, 0, width, height, screenFadeColor)
+		}
+	}
+	{	// Debug
+		if(raylib.IsKeyDown(.SPACE)){
+  			local_scope_color(raylib.BLACK)
+			GUI_DrawSpeechBubble(chat_br, "test")
+				fmt.println("We bout to crash arent we?")
 		}
 	}
 }
@@ -281,10 +302,9 @@ ColorLerp :: proc(from:raylib.Color, to:raylib.Color, t:f32) -> raylib.Color {
 }
 
 GUI_DrawSpeechBubble :: proc(imageData: ImageData, 
-					 	 	 text: string) -> bool {
+					 	 	 text: string) {
 	fontSize := gui.fontSize
-	topLeftX:= cast(i32)imageData.centerPosition.x
-	topLeftY:= cast(i32)imageData.centerPosition.y
+	topLeftX,topLeftY  := ToScreenOffsetPosition(imageData);
 	centerX:= topLeftX + cast(i32)(imageData.size.x/2)
 	centerY:= topLeftY + cast(i32)(imageData.size.y/2)
 	newText := strings.clone_to_cstring(text)
@@ -292,7 +312,6 @@ GUI_DrawSpeechBubble :: proc(imageData: ImageData,
 
 	raylib.DrawTexture(imageData.texture, topLeftX, topLeftY, raylib.WHITE)       
 	GUI_DrawText(newText, TextAlignment.Center, centerX, centerY, fontSize)
-    return raylib.IsKeyDown(character_player.interactButton)
 }
 
 GUI_ProgressBarVertical :: proc(bounds: raylib.Rectangle, 
@@ -324,6 +343,7 @@ GUI_DrawText :: proc (text:cstring, alignment:TextAlignment, posX:i32, posY:i32,
 		raylib.DrawText(text, (posX - scoreSizeLeft), posY, fontSize, color)
 	}
 }
+
 
 /* The following two functions make dealing with gui color easier like the following
 	{
