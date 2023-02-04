@@ -1,0 +1,14 @@
+*.dll
+*.exp
+*.pdb
+*.obj
+*.exe
+*.bc
+*.ll
+.vs/
+.vscode/
+temp/
+bin/
+game.lib
+game.exp
+
