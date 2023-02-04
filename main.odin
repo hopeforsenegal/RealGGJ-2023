@@ -89,6 +89,10 @@ dialogue1: [4]DialogueSegment
 
 
 main :: proc () {
+	assert(NumberOfCharacters("thiss", 'x') == 0)
+	assert(NumberOfCharacters("thiss", 't') == 1)
+	assert(NumberOfCharacters("thiss", 's') == 2)
+	assert(NumberOfCharacters("thi\nss", '\n') == 1)
 	raylib.InitWindow(800, 600, "Altered Roots")
 	defer raylib.CloseWindow()
 	raylib.SetTargetFPS(60)
@@ -120,7 +124,7 @@ main :: proc () {
 		ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&plant1, &plant_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	}
 	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
@@ -136,7 +140,7 @@ main :: proc () {
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(width/2) - character_player.size.x/2), (cast(f32)(height/2) - character_player.size.y/2)}
 		grandma.centerPosition = raylib.Vector2{cast(f32)(width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
 		plant1.centerPosition = raylib.Vector2{cast(f32)(plant1.size.x/2), cast(f32)(plant1.size.y/2)}
-		chat_br.centerPosition = raylib.Vector2{grandma.centerPosition.x - 75, grandma.centerPosition.y-80}
+		chat_br.centerPosition = raylib.Vector2{grandma.centerPosition.x - 85, grandma.centerPosition.y-80}
 		// Setup input
 		character_player.input = InputScheme{
 			.W,
@@ -150,6 +154,8 @@ main :: proc () {
 		// Setup dialogue
 		chat_br.dialogueIndex = -1
 		dialogue1[0] = DialogueSegment{text="Um...", timerText=3}
+		dialogue1[1] = DialogueSegment{text="Hey child", timerText=3}
+		dialogue1[2] = DialogueSegment{text="You water\nthose plants\nyet?", timerText=3}
 	}
 
 	for !raylib.WindowShouldClose() {
@@ -172,13 +178,16 @@ Update :: proc (deltaTime:f32) {
 		screenFadeColor = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
 	}else{
 		// Show first dialogue
-		chat_br.dialogueIndex = 0;
+		if(chat_br.dialogueIndex < 0) {
+			chat_br.dialogueIndex = 0;
+		}
 	}
 	if(chat_br.dialogueIndex >= 0){
 		if HasHitTime(&dialogue1[chat_br.dialogueIndex].timerText, deltaTime) {
+			fmt.println("dialogueIndex:", chat_br.dialogueIndex)
 			chat_br.dialogueIndex = chat_br.dialogueIndex + 1
 			if(chat_br.dialogueIndex >= len(dialogue1)) { 
-				fmt.println("We bout to crash arent we?")
+				chat_br.dialogueIndex = -1
 			}
 		}
 	}
@@ -263,7 +272,7 @@ Draw :: proc () {
 		if(raylib.IsKeyDown(.SPACE)){
   			local_scope_color(raylib.BLACK)
 			GUI_DrawSpeechBubble(chat_br, "test")
-				fmt.println("We bout to crash arent we?")
+				fmt.println("2 We bout to crash arent we?")
 		}
 	}
 }
@@ -308,10 +317,12 @@ GUI_DrawSpeechBubble :: proc(imageData: ImageData,
 	centerX:= topLeftX + cast(i32)(imageData.size.x/2)
 	centerY:= topLeftY + cast(i32)(imageData.size.y/2)
 	newText := strings.clone_to_cstring(text)
+	numberOfNewlines :=  NumberOfCharacters(text, '\n')
+	yBias := cast(i32)(numberOfNewlines>=1?numberOfNewlines*30: 20)
 	defer delete(newText)
 
-	raylib.DrawTexture(imageData.texture, topLeftX, topLeftY, raylib.WHITE)       
-	GUI_DrawText(newText, TextAlignment.Center, centerX, centerY, fontSize)
+	raylib.DrawTexture(imageData.texture, topLeftX, topLeftY, raylib.WHITE)
+	GUI_DrawText(newText, TextAlignment.Center, centerX, centerY - yBias, fontSize)
 }
 
 GUI_ProgressBarVertical :: proc(bounds: raylib.Rectangle, 
@@ -344,6 +355,15 @@ GUI_DrawText :: proc (text:cstring, alignment:TextAlignment, posX:i32, posY:i32,
 	}
 }
 
+NumberOfCharacters :: proc(text:string, of:rune) -> int{
+	num := 0
+	for character in text {
+		if(character == of){
+			num = num + 1
+		}
+	}
+	return num
+}
 
 /* The following two functions make dealing with gui color easier like the following
 	{
