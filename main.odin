@@ -153,6 +153,19 @@ Update :: proc (deltaTime:f32) {
 			// Update position
 			character_player.centerPosition.x += 100
 		}
+		// Keep player in level bounds
+		if character_player.centerPosition.x+(character_player.size.x/2) > cast(f32)(width) {
+			character_player.centerPosition.x = cast(f32)(width) - (character_player.size.x / 2)
+		}
+		if character_player.centerPosition.x-(character_player.size.x/2) < 0 {
+			character_player.centerPosition.x = (character_player.size.x / 2)
+		}
+		if character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(height) {
+			character_player.centerPosition.y = cast(f32)(height) - (character_player.size.y / 2)
+		}
+		if character_player.centerPosition.y-(character_player.size.y/2) < 0 {
+			character_player.centerPosition.y = (character_player.size.y / 2)
+		}
 	}
 }
 
