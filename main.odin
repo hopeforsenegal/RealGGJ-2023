@@ -16,6 +16,13 @@ TextAlignment :: enum {
 	Right,
 }
 
+Items :: enum {
+	WateringCan, 
+	RedSeeds,
+	BlackSeeds,
+	GreenSeeds,
+}
+
 GUI :: struct{
 	color: raylib.Color,
 	fontSize: i32,
@@ -60,6 +67,11 @@ Plant :: struct {
 Crate :: struct {
   outerImageData: 	ImageData,
   innerImageData: 	ImageData,
+  bloomImageData: 	ImageData,
+}
+
+SelectedSeed :: struct {
+  using imageData: 	ImageData,
 }
 
 Ground :: struct {
@@ -88,7 +100,8 @@ ground: 			Ground
 character_player: 	CharacterPlayer
 grandma: 			GrandMa
 watering_can: 		WateringCan
-crate: 				Crate
+red_crate: 			Crate
+seed: 			SelectedSeed
 plant1: 			Plant
 chat_br: 			ChatBubble
 screenFade: 		ColorFade
@@ -116,7 +129,8 @@ main :: proc () {
 	character_player = CharacterPlayer{}
 	grandma = GrandMa{}
 	plant1 = Plant{}
-	crate = Crate{}
+	red_crate = Crate{}
+	seed  = SelectedSeed{}
 	{	// Load images
 		ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
 		defer raylib.UnloadImage(ground_image)		
@@ -130,6 +144,10 @@ main :: proc () {
 		defer raylib.UnloadImage(plant_image)
 		crate_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/crate.png")
 		defer raylib.UnloadImage(crate_image)
+		seed_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/seed.png")
+		defer raylib.UnloadImage(seed_image)
+		selection_bloom_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/selection_bloom.png")
+		defer raylib.UnloadImage(selection_bloom_image)
 		chat_bottom_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_left.png")
 		defer raylib.UnloadImage(chat_bottom_left_image)
 		chat_bottom_right_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_right.png")
@@ -142,15 +160,18 @@ main :: proc () {
 		ResizeAndBindImageData(&watering_can, &watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
 		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&plant1, &plant_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&crate.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
-		ResizeAndBindImageData(&crate.innerImageData, &crate_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
+		ResizeAndBindImageData(&seed, &plant_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&red_crate.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
+		ResizeAndBindImageData(&red_crate.innerImageData, &seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
+		ResizeAndBindImageData(&red_crate.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
 		ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	}
 	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
 	defer raylib.UnloadTexture(watering_can.texture)
-	defer raylib.UnloadTexture(crate.outerImageData.texture)
-	defer raylib.UnloadTexture(crate.innerImageData.texture)
+	defer raylib.UnloadTexture(red_crate.outerImageData.texture)
+	defer raylib.UnloadTexture(red_crate.innerImageData.texture)
+	defer raylib.UnloadTexture(red_crate.bloomImageData.texture)
 	defer raylib.UnloadTexture(grandma.texture)
 	defer raylib.UnloadTexture(plant1.texture)
 	defer raylib.UnloadTexture(chat_br.texture)
@@ -163,8 +184,9 @@ main :: proc () {
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
 		grandma.centerPosition = raylib.Vector2{cast(f32)(screen_width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
 		plant1.centerPosition = raylib.Vector2{cast(f32)(plant1.size.x/2), cast(f32)(plant1.size.y/2)}
-		crate.outerImageData.centerPosition = raylib.Vector2{750,575}
-		crate.innerImageData.centerPosition = raylib.Vector2{750,575}
+		red_crate.outerImageData.centerPosition = raylib.Vector2{750,575}
+		red_crate.innerImageData.centerPosition = raylib.Vector2{750,575}
+		red_crate.bloomImageData.centerPosition = raylib.Vector2{750,575}
 		chat_br.centerPosition = raylib.Vector2{grandma.centerPosition.x - 85, grandma.centerPosition.y-80}
 		// Setup input
 		character_player.input = InputScheme{
@@ -283,10 +305,12 @@ Draw :: proc () {
 		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
 	}
 	{	// Crate
-		x,y  := ToScreenOffsetPosition(crate.outerImageData)
-		raylib.DrawTexture(crate.outerImageData.texture, x, y, raylib.WHITE)
-		x,y  = ToScreenOffsetPosition(crate.innerImageData)
-		raylib.DrawTexture(crate.innerImageData.texture, x, y, raylib.WHITE)
+		x,y  := ToScreenOffsetPosition(red_crate.outerImageData)
+		raylib.DrawTexture(red_crate.outerImageData.texture, x, y, raylib.WHITE)
+		x,y  = ToScreenOffsetPosition(red_crate.innerImageData)
+		raylib.DrawTexture(red_crate.innerImageData.texture, x, y, raylib.RED)
+		x,y  = ToScreenOffsetPosition(red_crate.bloomImageData)
+		raylib.DrawTexture(red_crate.innerImageData.texture, x, y, raylib.WHITE)
 	}
 	{	// Chat bubble
 		if(chat_br.dialogueIndex >= 0){
