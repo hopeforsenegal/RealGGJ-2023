@@ -49,17 +49,26 @@ GrandMa :: struct {
   using imageData: 	ImageData,
 }
 
-ChatBubble :: struct{
+WateringCan :: struct {
   using imageData: 	ImageData,
-  dialogueIndex: 	i32,
 }
 
 Plant :: struct {
   using imageData: 	ImageData,
 }
 
+Crate :: struct {
+  outerImageData: 	ImageData,
+  innerImageData: 	ImageData,
+}
+
 Ground :: struct {
   using imageData: 	ImageData,
+}
+
+ChatBubble :: struct{
+  using imageData: 	ImageData,
+  dialogueIndex: 	i32,
 }
 
 ColorFade :: struct {
@@ -77,13 +86,15 @@ DialogueSegment :: struct {
 gui: GUI
 ground: 			Ground
 character_player: 	CharacterPlayer
-grandma: 	GrandMa
+grandma: 			GrandMa
+watering_can: 		WateringCan
+crate: 				Crate
 plant1: 			Plant
 chat_br: 			ChatBubble
 screenFade: 		ColorFade
 screenFadeColor:	raylib.Color
-height: 	i32
-width: 		i32
+screen_height: 		i32
+screen_width: 		i32
 timerInputCooldown:			f32
 
 dialogue1: [4]DialogueSegment
@@ -98,22 +109,27 @@ main :: proc () {
 	defer raylib.CloseWindow()
 	raylib.SetTargetFPS(60)
 
-	height = raylib.GetScreenHeight()
-	width = raylib.GetScreenWidth()
+	screen_height = raylib.GetScreenHeight()
+	screen_width = raylib.GetScreenWidth()
 
 	ground = Ground{}
 	character_player = CharacterPlayer{}
 	grandma = GrandMa{}
 	plant1 = Plant{}
+	crate = Crate{}
 	{	// Load images
 		ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
 		defer raylib.UnloadImage(ground_image)		
 		character_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/character.png")
 		defer raylib.UnloadImage(character_image)	
+		watering_can_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/watering_can.png")
+		defer raylib.UnloadImage(watering_can_image)	
 		grandma_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/grandma.png")
 		defer raylib.UnloadImage(grandma_image)
 		plant_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plant.png")
 		defer raylib.UnloadImage(plant_image)
+		crate_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/crate.png")
+		defer raylib.UnloadImage(crate_image)
 		chat_bottom_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_left.png")
 		defer raylib.UnloadImage(chat_bottom_left_image)
 		chat_bottom_right_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_right.png")
@@ -121,14 +137,20 @@ main :: proc () {
 		chat_top_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_top_left.png")
 		defer raylib.UnloadImage(chat_top_left_image)
 
-		ResizeAndBindImageData(&ground, &ground_image, StandardDimensionsX * 8, StandardDimensionsY * 6)
+		ResizeAndBindImageData(&ground, &ground_image, screen_width, screen_height)
 		ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&watering_can, &watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
 		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&plant1, &plant_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&crate.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
+		ResizeAndBindImageData(&crate.innerImageData, &crate_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
 		ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	}
 	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
+	defer raylib.UnloadTexture(watering_can.texture)
+	defer raylib.UnloadTexture(crate.outerImageData.texture)
+	defer raylib.UnloadTexture(crate.innerImageData.texture)
 	defer raylib.UnloadTexture(grandma.texture)
 	defer raylib.UnloadTexture(plant1.texture)
 	defer raylib.UnloadTexture(chat_br.texture)
@@ -137,10 +159,12 @@ main :: proc () {
 		gui.color = raylib.WHITE
 		gui.fontSize = 20
 		// Starting positions
-		ground.centerPosition = raylib.Vector2{(cast(f32)(width/2)), (cast(f32)(height/2))}
-		character_player.centerPosition = raylib.Vector2{(cast(f32)(width/2) - character_player.size.x/2), (cast(f32)(height/2) - character_player.size.y/2)}
-		grandma.centerPosition = raylib.Vector2{cast(f32)(width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
+		ground.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2)), (cast(f32)(screen_height/2))}
+		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
+		grandma.centerPosition = raylib.Vector2{cast(f32)(screen_width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
 		plant1.centerPosition = raylib.Vector2{cast(f32)(plant1.size.x/2), cast(f32)(plant1.size.y/2)}
+		crate.outerImageData.centerPosition = raylib.Vector2{750,575}
+		crate.innerImageData.centerPosition = raylib.Vector2{750,575}
 		chat_br.centerPosition = raylib.Vector2{grandma.centerPosition.x - 85, grandma.centerPosition.y-80}
 		// Setup input
 		character_player.input = InputScheme{
@@ -156,7 +180,8 @@ main :: proc () {
 		chat_br.dialogueIndex = -1
 		dialogue1[0] = DialogueSegment{text="Um...", timerText=3}
 		dialogue1[1] = DialogueSegment{text="Hey child", timerText=3}
-		dialogue1[2] = DialogueSegment{text="You water\nthose plants\nyet?", timerText=3}
+		dialogue1[2] = DialogueSegment{text="You planting\nthose plants\nyet?", timerText=3}
+		dialogue1[3] = DialogueSegment{text="Granny\nis getting\nold!", timerText=3}
 	}
 
 	for !raylib.WindowShouldClose() {
@@ -164,9 +189,9 @@ main :: proc () {
 		defer raylib.EndDrawing()
 		raylib.ClearBackground(raylib.BLACK)
 
-		// Intentionally reassign width and height
-		height = raylib.GetScreenHeight()
-		width = raylib.GetScreenWidth()
+		// Intentionally reassign width and height incase we allow resizes
+		screen_height = raylib.GetScreenHeight()
+		screen_width = raylib.GetScreenWidth()
 		dt := raylib.GetFrameTime()
 		Update(dt)
 		Draw()
@@ -216,14 +241,14 @@ Update :: proc (deltaTime:f32) {
 			character_player.lastDirectionRight = true
 		}
 		// Keep player in level bounds
-		if character_player.centerPosition.x+(character_player.size.x/2) > cast(f32)(width) {
-			character_player.centerPosition.x = cast(f32)(width) - (character_player.size.x / 2)
+		if character_player.centerPosition.x+(character_player.size.x/2) > cast(f32)(screen_width) {
+			character_player.centerPosition.x = cast(f32)(screen_width) - (character_player.size.x / 2)
 		}
 		if character_player.centerPosition.x-(character_player.size.x/2) < 0 {
 			character_player.centerPosition.x = (character_player.size.x / 2)
 		}
-		if character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(height) {
-			character_player.centerPosition.y = cast(f32)(height) - (character_player.size.y / 2)
+		if character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(screen_height) {
+			character_player.centerPosition.y = cast(f32)(screen_height) - (character_player.size.y / 2)
 		}
 		if character_player.centerPosition.y-(character_player.size.y/2) < 0 {
 			character_player.centerPosition.y = (character_player.size.y / 2)
@@ -232,6 +257,8 @@ Update :: proc (deltaTime:f32) {
 		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {
 				fmt.println("plant")
 		}
+		// Set watering can to player position
+		watering_can.centerPosition = character_player.centerPosition
 	}
 }
 
@@ -255,6 +282,12 @@ Draw :: proc () {
 		x,y  := ToScreenOffsetPosition(plant1);
 		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
 	}
+	{	// Crate
+		x,y  := ToScreenOffsetPosition(crate.outerImageData);
+		raylib.DrawTexture(crate.outerImageData.texture, x, y, raylib.WHITE)
+		x,y  = ToScreenOffsetPosition(crate.innerImageData);
+		raylib.DrawTexture(crate.innerImageData.texture, x, y, raylib.WHITE)
+	}
 	{	// Chat bubble
 		if(chat_br.dialogueIndex >= 0){
 			if(dialogue1[chat_br.dialogueIndex].timerText > 0) {
@@ -275,13 +308,19 @@ Draw :: proc () {
 	}
 	{	// Screen Fade
 		if(screenFade.timerScreenFade > 0){
-			raylib.DrawRectangle(0, 0, width, height, screenFadeColor)
+			raylib.DrawRectangle(0, 0, screen_width, screen_height, screenFadeColor)
 		}
 	}
 	{	// Debug
 		if(raylib.IsKeyDown(.SPACE)){
   			local_scope_color(raylib.BLACK)
 			GUI_DrawSpeechBubble(chat_br, "test")
+
+			x,y  := ToScreenOffsetPosition(watering_can);
+			position:= raylib.Vector2{cast(f32)x, cast(f32)y}
+			texture_width := cast(f32)watering_can.texture.width * (character_player.lastDirectionRight?-1:1)
+			texture_height := cast(f32)watering_can.texture.height
+			raylib.DrawTextureRec(watering_can.texture, raylib.Rectangle{ 0,0, texture_width, texture_height }, position, raylib.WHITE)
 		}
 	}
 }
