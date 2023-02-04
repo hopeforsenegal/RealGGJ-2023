@@ -22,6 +22,11 @@ Plant :: struct{
 		texture: 	raylib.Texture,
 }
 
+Ground :: struct{
+  using rectangle: 	Rectangle,
+		texture: 	raylib.Texture,
+}
+
 InputScheme :: struct {
 	upButton:   	raylib.KeyboardKey,
 	leftButton: 	raylib.KeyboardKey,
@@ -29,6 +34,7 @@ InputScheme :: struct {
 	rightButton:	raylib.KeyboardKey,
 }
 
+ground: 			Ground
 character_player: 	CharacterPlayer
 plant1: 			Plant
 height: 	i32
@@ -46,6 +52,15 @@ main :: proc () {
 	character_player = CharacterPlayer{}
 	plant1 = Plant{}
 	{	// Load images
+		ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
+		defer raylib.UnloadImage(ground_image)
+		{
+			raylib.ImageResize(&ground_image, StandardDimensionsX * 8, StandardDimensionsY * 6)
+			ground_texture := raylib.LoadTextureFromImage(ground_image)
+			assert(ground_texture.id > 0)
+			ground.texture = ground_texture
+			ground.size = raylib.Vector2{cast(f32)ground_texture.width, cast(f32)ground_texture.height}
+		}
 		character_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/character.png")
 		defer raylib.UnloadImage(character_image)
 		{
@@ -65,17 +80,21 @@ main :: proc () {
 			plant1.size = raylib.Vector2{cast(f32)plant_texture.width, cast(f32)plant_texture.height}
 		}
 	}
+	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
 	defer raylib.UnloadTexture(plant1.texture)
-	{	// Bind to data
+	{	
+		// Starting positions
+		ground.centerPosition = raylib.Vector2{(cast(f32)(width/2)), (cast(f32)(height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(width/2) - character_player.size.x/2), (cast(f32)(height/2) - character_player.size.y/2)}
+		plant1.centerPosition = raylib.Vector2{cast(f32)(plant1.size.x/2), cast(f32)(plant1.size.y/2)}
+		// Setup input
 		character_player.input = InputScheme{
 			.W,
 			.A,
 			.S,
 			.D,
 		}
-		plant1.centerPosition = raylib.Vector2{cast(f32)(plant1.size.x/2), cast(f32)(plant1.size.y/2)}
 	}
 
 	for !raylib.WindowShouldClose() {
@@ -118,17 +137,21 @@ Update :: proc (deltaTime:f32) {
 }
 
 Draw :: proc () {
+	{	// Ground
+		x,y  := ToScreenOffsetPosition(ground);
+		raylib.DrawTexture(ground.texture, x, y, raylib.WHITE)
+	}
 	{	// Player
 		x,y := ToScreenOffsetPosition(character_player);
-    	raylib.DrawTexture(character_player.texture, x, y, raylib.WHITE)
+		raylib.DrawTexture(character_player.texture, x, y, raylib.WHITE)
 	}
 	{	// Plants
 		x,y  := ToScreenOffsetPosition(plant1);
-    	raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
+		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
 	}
 }
 
-ToScreenOffsetPosition :: proc(using rectangle:Rectangle) -> (i32, i32){
+ToScreenOffsetPosition :: proc(using rectangle:Rectangle) -> (i32, i32) {
 	return cast(i32)(centerPosition.x - size.x/2), cast(i32)(centerPosition.y - size.y/2)
 }
 
