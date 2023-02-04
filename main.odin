@@ -1,10 +1,16 @@
 package aroots
 
+import "core:intrinsics"
+import "core:math"
 import raylib "vendor:raylib"
 
 InputCooldownSeconds 	:: 0.4
 StandardDimensionsX 	:: 100
 StandardDimensionsY 	:: 100
+
+GUI :: struct{
+	color: raylib.Color,
+}
 
 InputScheme :: struct {
 	upButton:   	raylib.KeyboardKey,
@@ -28,6 +34,10 @@ CharacterPlayer :: struct {
   using input: 		InputScheme,
 }
 
+GrandMa :: struct {
+  using imageData: 	ImageData,
+}
+
 Plant :: struct {
   using imageData: 	ImageData,
 }
@@ -43,8 +53,10 @@ ColorFade :: struct {
 	colorTo: 			raylib.Color,
 }
 
+gui: GUI
 ground: 			Ground
 character_player: 	CharacterPlayer
+grandma: 	GrandMa
 plant1: 			Plant
 screenFade: 		ColorFade
 screenFadeColor:	raylib.Color
@@ -63,26 +75,32 @@ main :: proc () {
 
 	ground = Ground{}
 	character_player = CharacterPlayer{}
+	grandma = GrandMa{}
 	plant1 = Plant{}
 	{	// Load images
 		ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
 		defer raylib.UnloadImage(ground_image)		
 		character_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/character.png")
-		defer raylib.UnloadImage(character_image)
+		defer raylib.UnloadImage(character_image)	
+		grandma_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/grandma.png")
+		defer raylib.UnloadImage(grandma_image)
 		plant_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plant.png")
 		defer raylib.UnloadImage(plant_image)
 
 		ResizeAndBindImageData(&ground, &ground_image, StandardDimensionsX * 8, StandardDimensionsY * 6)
 		ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&plant1, &plant_image, StandardDimensionsX, StandardDimensionsY)
 	}
 	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
+	defer raylib.UnloadTexture(grandma.texture)
 	defer raylib.UnloadTexture(plant1.texture)
 	{	
 		// Starting positions
 		ground.centerPosition = raylib.Vector2{(cast(f32)(width/2)), (cast(f32)(height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(width/2) - character_player.size.x/2), (cast(f32)(height/2) - character_player.size.y/2)}
+		grandma.centerPosition = raylib.Vector2{cast(f32)(width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2)}
 		plant1.centerPosition = raylib.Vector2{cast(f32)(plant1.size.x/2), cast(f32)(plant1.size.y/2)}
 		// Setup input
 		character_player.input = InputScheme{
@@ -92,7 +110,7 @@ main :: proc () {
 			.D,
 		}
 		// Setup screen fade
-		screenFade = MakeColorFade(3, raylib.BLACK, raylib.WHITE)
+		screenFade = MakeColorFade(3, raylib.BLACK, raylib.Color{1,1,1,0})
 	}
 
 	for !raylib.WindowShouldClose() {
@@ -147,9 +165,27 @@ Draw :: proc () {
 		x,y := ToScreenOffsetPosition(character_player);
 		raylib.DrawTexture(character_player.texture, x, y, raylib.WHITE)
 	}
+	{	// Grandma
+		x,y := ToScreenOffsetPosition(grandma);
+		raylib.DrawTexture(grandma.texture, x, y, raylib.WHITE)
+	}
 	{	// Plants
 		x,y  := ToScreenOffsetPosition(plant1);
 		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
+	}
+	{	// Progress Bar
+		currentColor := gui.color
+		defer gui.color = currentColor
+		gui.color = raylib.BLACK
+		ProgressBarVertical(raylib.Rectangle{0,0,5,50}, "", 1, 0, 1, false)
+		ProgressBarVertical(raylib.Rectangle{5,40,5,50}, "", 1, 0, 1, false)
+	}
+	{	// Progress Bar
+		currentColor := gui.color
+		defer gui.color = currentColor
+		gui.color = raylib.WHITE
+		ProgressBarVertical(raylib.Rectangle{40,0,5,50}, "", 1, 0, 1, false)
+		ProgressBarVertical(raylib.Rectangle{45,40,5,50}, "", 1, 0, 1, false)
 	}
 	{	// Screen Fade
 		if(screenFade.timerScreenFade > 0){
@@ -189,4 +225,21 @@ ColorLerp :: proc(from:raylib.Color, to:raylib.Color, t:f32) -> raylib.Color {
     b := Lerp(from.b, to.b, t);
     a := Lerp(from.a, to.a, t);
     return raylib.Color{r,g,b,a}
+}
+
+ProgressBarVertical :: proc(bounds: raylib.Rectangle, 
+							text: string,	// ignore for now
+        					value : f32,
+        					min_value : f32,	// ignore for now
+        					max_value : f32,// ignore for now
+        					show_value : bool) -> f32 {
+	color := gui.color
+	newValue := clamp(0, 1, value)
+	x := cast(i32)bounds.x
+	y := cast(i32)bounds.y
+	w := cast(i32)bounds.width
+	h := cast(i32)(bounds.height * newValue)
+	raylib.DrawRectangle(x, y, w, h, color)	
+	// Should/could draw text
+    return newValue	// should be a scale instead of clamp
 }
