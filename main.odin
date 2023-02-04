@@ -6,32 +6,34 @@ InputCooldownSeconds 	:: 0.4
 StandardDimensionsX 	:: 100
 StandardDimensionsY 	:: 100
 
+InputScheme :: struct {
+	upButton:   	raylib.KeyboardKey,
+	leftButton: 	raylib.KeyboardKey,
+	downButton: 	raylib.KeyboardKey,
+	rightButton:	raylib.KeyboardKey,
+}
+
+ImageData :: struct{
+  using rectangle: 	Rectangle,
+		texture: 	raylib.Texture,
+}
+
 Rectangle :: struct {
 	centerPosition: raylib.Vector2,
 	size:           raylib.Vector2,
 }
 
 CharacterPlayer :: struct{
-  using rectangle: 	Rectangle,
+  using imageData: 	ImageData,
   using input: 		InputScheme,
-		texture: 	raylib.Texture,
 }
 
 Plant :: struct{
-  using rectangle: 	Rectangle,
-		texture: 	raylib.Texture,
+  using imageData: 	ImageData,
 }
 
 Ground :: struct{
-  using rectangle: 	Rectangle,
-		texture: 	raylib.Texture,
-}
-
-InputScheme :: struct {
-	upButton:   	raylib.KeyboardKey,
-	leftButton: 	raylib.KeyboardKey,
-	downButton: 	raylib.KeyboardKey,
-	rightButton:	raylib.KeyboardKey,
+  using imageData: 	ImageData,
 }
 
 ground: 			Ground
@@ -49,36 +51,20 @@ main :: proc () {
 	height = raylib.GetScreenHeight()
 	width = raylib.GetScreenWidth()
 
+	ground = Ground{}
 	character_player = CharacterPlayer{}
 	plant1 = Plant{}
 	{	// Load images
 		ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
-		defer raylib.UnloadImage(ground_image)
-		{
-			raylib.ImageResize(&ground_image, StandardDimensionsX * 8, StandardDimensionsY * 6)
-			ground_texture := raylib.LoadTextureFromImage(ground_image)
-			assert(ground_texture.id > 0)
-			ground.texture = ground_texture
-			ground.size = raylib.Vector2{cast(f32)ground_texture.width, cast(f32)ground_texture.height}
-		}
+		defer raylib.UnloadImage(ground_image)		
 		character_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/character.png")
 		defer raylib.UnloadImage(character_image)
-		{
-			raylib.ImageResize(&character_image, StandardDimensionsX, StandardDimensionsY)
-			character_texture := raylib.LoadTextureFromImage(character_image)
-			assert(character_texture.id > 0)
-			character_player.texture = character_texture
-			character_player.size = raylib.Vector2{cast(f32)character_texture.width, cast(f32)character_texture.height}
-		}
 		plant_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plant.png")
 		defer raylib.UnloadImage(plant_image)
-		{
-			raylib.ImageResize(&plant_image, StandardDimensionsX, StandardDimensionsY)
-			plant_texture := raylib.LoadTextureFromImage(plant_image)
-			assert(plant_texture.id > 0)
-			plant1.texture = plant_texture
-			plant1.size = raylib.Vector2{cast(f32)plant_texture.width, cast(f32)plant_texture.height}
-		}
+
+		ResizeAndBindImageData(&ground, &ground_image, StandardDimensionsX * 8, StandardDimensionsY * 6)
+		ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&plant1, &plant_image, StandardDimensionsX, StandardDimensionsY)
 	}
 	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
@@ -158,4 +144,12 @@ ToScreenOffsetPosition :: proc(using rectangle:Rectangle) -> (i32, i32) {
 HasHitTime :: proc(timeRemaining:^f32, deltaTime:f32) ->bool {
 	timeRemaining^ = timeRemaining^ - deltaTime
 	return timeRemaining^ <= 0
+}
+
+ResizeAndBindImageData :: proc(imageData:^ImageData, image:^raylib.Image, dimensionX:i32, dimensionY:i32) {
+	raylib.ImageResize(image, dimensionX, dimensionY)
+	texture := raylib.LoadTextureFromImage(image^)
+	assert(texture.id > 0)
+	imageData.texture = texture
+	imageData.size = raylib.Vector2{cast(f32)texture.width, cast(f32)texture.height}
 }
