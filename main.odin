@@ -40,8 +40,9 @@ Rectangle :: struct {
 }
 
 CharacterPlayer :: struct {
-  using imageData: 	ImageData,
-  using input: 		InputScheme,
+  using imageData: 	       ImageData,
+  using input: 			   InputScheme,
+  		lastDirectionRight: bool,
 }
 
 GrandMa :: struct {
@@ -206,11 +207,13 @@ Update :: proc (deltaTime:f32) {
 			timerInputCooldown = InputCooldownSeconds
 			// Update position
 			character_player.centerPosition.x -= 100
+			character_player.lastDirectionRight = false
 		}
 		if(raylib.IsKeyDown(character_player.rightButton)){
 			timerInputCooldown = InputCooldownSeconds
 			// Update position
 			character_player.centerPosition.x += 100
+			character_player.lastDirectionRight = true
 		}
 		// Keep player in level bounds
 		if character_player.centerPosition.x+(character_player.size.x/2) > cast(f32)(width) {
@@ -225,6 +228,10 @@ Update :: proc (deltaTime:f32) {
 		if character_player.centerPosition.y-(character_player.size.y/2) < 0 {
 			character_player.centerPosition.y = (character_player.size.y / 2)
 		}
+		// Detect by plants
+		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {
+				fmt.println("plant")
+		}
 	}
 }
 
@@ -235,7 +242,10 @@ Draw :: proc () {
 	}
 	{	// Player
 		x,y := ToScreenOffsetPosition(character_player);
-		raylib.DrawTexture(character_player.texture, x, y, raylib.WHITE)
+		position:= raylib.Vector2{cast(f32)x, cast(f32)y}
+		texture_width := cast(f32)character_player.texture.width * (character_player.lastDirectionRight?-1:1)
+		texture_height := cast(f32)character_player.texture.height
+		raylib.DrawTextureRec(character_player.texture, raylib.Rectangle{ 0,0, texture_width, texture_height }, position, raylib.WHITE)
 	}
 	{	// Grandma
 		x,y := ToScreenOffsetPosition(grandma);
@@ -272,7 +282,6 @@ Draw :: proc () {
 		if(raylib.IsKeyDown(.SPACE)){
   			local_scope_color(raylib.BLACK)
 			GUI_DrawSpeechBubble(chat_br, "test")
-				fmt.println("2 We bout to crash arent we?")
 		}
 	}
 }
