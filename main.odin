@@ -23,25 +23,35 @@ Rectangle :: struct {
 	size:           raylib.Vector2,
 }
 
-CharacterPlayer :: struct{
+CharacterPlayer :: struct {
   using imageData: 	ImageData,
   using input: 		InputScheme,
 }
 
-Plant :: struct{
+Plant :: struct {
   using imageData: 	ImageData,
 }
 
-Ground :: struct{
+Ground :: struct {
   using imageData: 	ImageData,
+}
+
+ColorFade :: struct {
+	timerScreenFade: 	f32,
+	initialTime: 		f32,
+	colorFrom: 			raylib.Color,
+	colorTo: 			raylib.Color,
 }
 
 ground: 			Ground
 character_player: 	CharacterPlayer
 plant1: 			Plant
+screenFade: 		ColorFade
+screenFadeColor:	raylib.Color
 height: 	i32
 width: 		i32
-timerInputCooldown: f32
+timerInputCooldown:			f32
+
 
 main :: proc () {
 	raylib.InitWindow(800, 600, "Altered Roots")
@@ -81,6 +91,8 @@ main :: proc () {
 			.S,
 			.D,
 		}
+		// Setup screen fade
+		screenFade = MakeColorFade(3, raylib.BLACK, raylib.WHITE)
 	}
 
 	for !raylib.WindowShouldClose() {
@@ -98,6 +110,10 @@ main :: proc () {
 }
 
 Update :: proc (deltaTime:f32) {
+	if !HasHitTime(&screenFade.timerScreenFade, deltaTime) {
+		t := screenFade.timerScreenFade/ screenFade.initialTime
+		screenFadeColor = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
+	}
 	if HasHitTime(&timerInputCooldown, deltaTime) {
 		if(raylib.IsKeyDown(character_player.upButton)){
 			timerInputCooldown = InputCooldownSeconds
@@ -135,6 +151,11 @@ Draw :: proc () {
 		x,y  := ToScreenOffsetPosition(plant1);
 		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
 	}
+	{	// Screen Fade
+		if(screenFade.timerScreenFade > 0){
+			raylib.DrawRectangle(0, 0, width, height, screenFadeColor)
+		}
+	}
 }
 
 ToScreenOffsetPosition :: proc(using rectangle:Rectangle) -> (i32, i32) {
@@ -152,4 +173,20 @@ ResizeAndBindImageData :: proc(imageData:^ImageData, image:^raylib.Image, dimens
 	assert(texture.id > 0)
 	imageData.texture = texture
 	imageData.size = raylib.Vector2{cast(f32)texture.width, cast(f32)texture.height}
+}
+
+MakeColorFade :: proc(initialTime:f32, colorFrom: raylib.Color, colorTo:raylib.Color) -> ColorFade{
+	return ColorFade{initialTime, initialTime, colorFrom, colorTo}
+}
+
+Lerp :: proc(from:u8, to:u8, t:f32) ->u8 {
+     return cast(u8)(cast(f32)from * (1 - t)) + cast(u8)(cast(f32)to * t);
+}
+
+ColorLerp :: proc(from:raylib.Color, to:raylib.Color, t:f32) -> raylib.Color {
+    r := Lerp(from.r, to.r, t);
+    g := Lerp(from.g, to.g, t);
+    b := Lerp(from.b, to.b, t);
+    a := Lerp(from.a, to.a, t);
+    return raylib.Color{r,g,b,a}
 }
