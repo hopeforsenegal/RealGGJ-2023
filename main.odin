@@ -10,6 +10,8 @@ InputCooldownSeconds 	:: 0.4
 StandardDimensionsX 	:: 100
 StandardDimensionsY 	:: 100
 
+ColorHalfTransparent :: raylib.Color{255,255,255,120}
+
 TextAlignment :: enum {
 	Left, 
 	Center,
@@ -23,17 +25,30 @@ Items :: enum {
 	GreenSeeds,
 }
 
-GUI :: struct{
+GUI :: struct {
 	color: raylib.Color,
 	fontSize: i32,
 }
 
+Actions :: struct {
+    left: bool,
+    up: bool,
+    down: bool,
+    right: bool,
+    interact: bool,
+}
+
 InputScheme :: struct {
 	upButton:   	raylib.KeyboardKey,
+	upButton2:   	raylib.KeyboardKey,
 	leftButton: 	raylib.KeyboardKey,
+	leftButton2: 	raylib.KeyboardKey,
 	downButton: 	raylib.KeyboardKey,
+	downButton2: 	raylib.KeyboardKey,
 	rightButton:	raylib.KeyboardKey,
+	rightButton2:	raylib.KeyboardKey,
 	interactButton:	raylib.KeyboardKey,
+	interactButton2:	raylib.KeyboardKey,
 }
 
 ImageData :: struct{
@@ -68,10 +83,8 @@ Crate :: struct {
   outerImageData: 	ImageData,
   innerImageData: 	ImageData,
   bloomImageData: 	ImageData,
-}
-
-SelectedSeed :: struct {
-  using imageData: 	ImageData,
+  hovering:			bool,
+  selected:			bool,
 }
 
 Ground :: struct {
@@ -101,7 +114,6 @@ character_player: 	CharacterPlayer
 grandma: 			GrandMa
 watering_can: 		WateringCan
 red_crate: 			Crate
-seed: 			SelectedSeed
 plant1: 			Plant
 chat_br: 			ChatBubble
 screenFade: 		ColorFade
@@ -130,7 +142,6 @@ main :: proc () {
 	grandma = GrandMa{}
 	plant1 = Plant{}
 	red_crate = Crate{}
-	seed  = SelectedSeed{}
 	{	// Load images
 		ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
 		defer raylib.UnloadImage(ground_image)		
@@ -160,7 +171,6 @@ main :: proc () {
 		ResizeAndBindImageData(&watering_can, &watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
 		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&plant1, &plant_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&seed, &plant_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&red_crate.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
 		ResizeAndBindImageData(&red_crate.innerImageData, &seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
 		ResizeAndBindImageData(&red_crate.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
@@ -191,10 +201,15 @@ main :: proc () {
 		// Setup input
 		character_player.input = InputScheme{
 			.W,
+			.UP,
 			.A,
+			.LEFT,
 			.S,
+			.DOWN,
 			.D,
+			.RIGHT,
 			.ENTER,
+			.SPACE,
 		}
 		// Setup screen fade
 		screenFade = MakeColorFade(3, raylib.BLACK, raylib.Color{1,1,1,0})
@@ -221,6 +236,8 @@ main :: proc () {
 }
 
 Update :: proc (deltaTime:f32) {
+    actions := GetUserActions(character_player);
+
 	if !HasHitTime(&screenFade.timerScreenFade, deltaTime) {
 		t := screenFade.timerScreenFade/ screenFade.initialTime
 		screenFadeColor = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
@@ -240,23 +257,27 @@ Update :: proc (deltaTime:f32) {
 		}
 	}
 	if HasHitTime(&timerInputCooldown, deltaTime) {
-		if(raylib.IsKeyDown(character_player.upButton)){
+		if(actions.up){
+			actions.up = false
 			timerInputCooldown = InputCooldownSeconds
 			// Update position
 			character_player.centerPosition.y -= 100
 		}
-		if(raylib.IsKeyDown(character_player.downButton)){
+		if(actions.down){
+			actions.down = false
 			timerInputCooldown = InputCooldownSeconds
 			// Update position
 			character_player.centerPosition.y += 100
 		}
-		if(raylib.IsKeyDown(character_player.leftButton)){
+		if(actions.left){
+			actions.left = false
 			timerInputCooldown = InputCooldownSeconds
 			// Update position
 			character_player.centerPosition.x -= 100
 			character_player.lastDirectionRight = false
 		}
-		if(raylib.IsKeyDown(character_player.rightButton)){
+		if(actions.right){
+			actions.right = false
 			timerInputCooldown = InputCooldownSeconds
 			// Update position
 			character_player.centerPosition.x += 100
@@ -279,9 +300,21 @@ Update :: proc (deltaTime:f32) {
 		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {
 			fmt.println("plant")
 		}
-		// Set watering can to player position
-		watering_can.centerPosition = character_player.centerPosition
+		red_crate.hovering = false
+		if character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(screen_height) - 100 {
+			if(character_player.centerPosition.x >=700){
+				red_crate.hovering = true
+			}			
+		}
 	}
+
+	if(red_crate.hovering && actions.interact){
+		actions.interact = false
+		red_crate.selected = true
+		// deselect others
+	}
+	// Set watering can to player position
+	watering_can.centerPosition = character_player.centerPosition
 }
 
 Draw :: proc () {
@@ -305,12 +338,17 @@ Draw :: proc () {
 		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
 	}
 	{	// Crate
+		if(red_crate.hovering){
+			x,y  := ToScreenOffsetPosition(red_crate.bloomImageData)
+			raylib.DrawTexture(red_crate.bloomImageData.texture, x, y, ColorHalfTransparent)
+		}
+		if(red_crate.selected){
+			// Do cool new stuff here
+		}
 		x,y  := ToScreenOffsetPosition(red_crate.outerImageData)
 		raylib.DrawTexture(red_crate.outerImageData.texture, x, y, raylib.WHITE)
 		x,y  = ToScreenOffsetPosition(red_crate.innerImageData)
 		raylib.DrawTexture(red_crate.innerImageData.texture, x, y, raylib.RED)
-		x,y  = ToScreenOffsetPosition(red_crate.bloomImageData)
-		raylib.DrawTexture(red_crate.innerImageData.texture, x, y, raylib.WHITE)
 	}
 	{	// Chat bubble
 		if(chat_br.dialogueIndex >= 0){
@@ -347,6 +385,16 @@ Draw :: proc () {
 			raylib.DrawTextureRec(watering_can.texture, raylib.Rectangle{ 0,0, texture_width, texture_height }, position, raylib.WHITE)
 		}
 	}
+}
+
+GetUserActions :: proc(using input: InputScheme) ->Actions {
+	return Actions {
+				left = raylib.IsKeyDown(leftButton)|| raylib.IsKeyDown(leftButton2),
+				up = raylib.IsKeyDown(upButton)|| raylib.IsKeyDown(upButton2),
+				down = raylib.IsKeyDown(downButton)|| raylib.IsKeyDown(downButton2),
+				right = raylib.IsKeyDown(rightButton)|| raylib.IsKeyDown(rightButton2),
+				interact = raylib.IsKeyDown(interactButton)|| raylib.IsKeyDown(interactButton2),
+			}
 }
 
 ToScreenOffsetPosition :: proc(using rectangle:Rectangle) -> (i32, i32) {
@@ -446,12 +494,12 @@ NumberOfCharacters :: proc(text:string, of:rune) -> int{
 	}
 */
 restore_color :: proc(color: raylib.Color) {
-  gui.color = color
+  	gui.color = color
 }
 
 @(deferred_out=restore_color)
 local_scope_color :: proc(color: raylib.Color) -> raylib.Color {
-  current_color := gui.color
-  gui.color = color
-  return current_color
+	current_color := gui.color
+	gui.color = color
+	return current_color
 }
