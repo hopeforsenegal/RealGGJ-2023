@@ -205,7 +205,7 @@ Update :: proc (deltaTime:f32) {
 	}else{
 		// Show first dialogue
 		if(chat_br.dialogueIndex < 0) {
-			chat_br.dialogueIndex = 0;
+			chat_br.dialogueIndex = 0
 		}
 	}
 	if(chat_br.dialogueIndex >= 0){
@@ -253,9 +253,9 @@ Update :: proc (deltaTime:f32) {
 		if character_player.centerPosition.y-(character_player.size.y/2) < 0 {
 			character_player.centerPosition.y = (character_player.size.y / 2)
 		}
-		// Detect by plants
+		// Detect by objects of interest
 		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {
-				fmt.println("plant")
+			fmt.println("plant")
 		}
 		// Set watering can to player position
 		watering_can.centerPosition = character_player.centerPosition
@@ -264,28 +264,28 @@ Update :: proc (deltaTime:f32) {
 
 Draw :: proc () {
 	{	// Ground
-		x,y  := ToScreenOffsetPosition(ground);
+		x,y  := ToScreenOffsetPosition(ground)
 		raylib.DrawTexture(ground.texture, x, y, raylib.WHITE)
 	}
 	{	// Player
-		x,y := ToScreenOffsetPosition(character_player);
+		x,y := ToScreenOffsetPosition(character_player)
 		position:= raylib.Vector2{cast(f32)x, cast(f32)y}
 		texture_width := cast(f32)character_player.texture.width * (character_player.lastDirectionRight?-1:1)
 		texture_height := cast(f32)character_player.texture.height
 		raylib.DrawTextureRec(character_player.texture, raylib.Rectangle{ 0,0, texture_width, texture_height }, position, raylib.WHITE)
 	}
 	{	// Grandma
-		x,y := ToScreenOffsetPosition(grandma);
+		x,y := ToScreenOffsetPosition(grandma)
 		raylib.DrawTexture(grandma.texture, x, y, raylib.WHITE)
 	}
 	{	// Plants
-		x,y  := ToScreenOffsetPosition(plant1);
+		x,y  := ToScreenOffsetPosition(plant1)
 		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
 	}
 	{	// Crate
-		x,y  := ToScreenOffsetPosition(crate.outerImageData);
+		x,y  := ToScreenOffsetPosition(crate.outerImageData)
 		raylib.DrawTexture(crate.outerImageData.texture, x, y, raylib.WHITE)
-		x,y  = ToScreenOffsetPosition(crate.innerImageData);
+		x,y  = ToScreenOffsetPosition(crate.innerImageData)
 		raylib.DrawTexture(crate.innerImageData.texture, x, y, raylib.WHITE)
 	}
 	{	// Chat bubble
@@ -316,7 +316,7 @@ Draw :: proc () {
   			local_scope_color(raylib.BLACK)
 			GUI_DrawSpeechBubble(chat_br, "test")
 
-			x,y  := ToScreenOffsetPosition(watering_can);
+			x,y  := ToScreenOffsetPosition(watering_can)
 			position:= raylib.Vector2{cast(f32)x, cast(f32)y}
 			texture_width := cast(f32)watering_can.texture.width * (character_player.lastDirectionRight?-1:1)
 			texture_height := cast(f32)watering_can.texture.height
@@ -347,23 +347,23 @@ MakeColorFade :: proc(initialTime:f32, colorFrom: raylib.Color, colorTo:raylib.C
 }
 
 Lerp :: proc(from:u8, to:u8, t:f32) ->u8 {
-     return cast(u8)(cast(f32)from * (1 - t)) + cast(u8)(cast(f32)to * t);
+     return cast(u8)(cast(f32)from * (1 - t)) + cast(u8)(cast(f32)to * t)
 }
 
 ColorLerp :: proc(from:raylib.Color, to:raylib.Color, t:f32) -> raylib.Color {
-    r := Lerp(from.r, to.r, t);
-    g := Lerp(from.g, to.g, t);
-    b := Lerp(from.b, to.b, t);
-    a := Lerp(from.a, to.a, t);
+    r := Lerp(from.r, to.r, t)
+    g := Lerp(from.g, to.g, t)
+    b := Lerp(from.b, to.b, t)
+    a := Lerp(from.a, to.a, t)
     return raylib.Color{r,g,b,a}
 }
 
 GUI_DrawSpeechBubble :: proc(imageData: ImageData, 
 					 	 	 text: string) {
 	fontSize := gui.fontSize
-	topLeftX,topLeftY  := ToScreenOffsetPosition(imageData);
-	centerX:= topLeftX + cast(i32)(imageData.size.x/2)
-	centerY:= topLeftY + cast(i32)(imageData.size.y/2)
+	topLeftX, topLeftY  := ToScreenOffsetPosition(imageData)
+	centerX := topLeftX + cast(i32)(imageData.size.x/2)
+	centerY := topLeftY + cast(i32)(imageData.size.y/2)
 	newText := strings.clone_to_cstring(text)
 	numberOfNewlines :=  NumberOfCharacters(text, '\n')
 	yBias := cast(i32)(numberOfNewlines>=1?numberOfNewlines*30: 20)
