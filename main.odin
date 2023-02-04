@@ -68,6 +68,11 @@ ColorFade :: struct {
 	colorTo: 			raylib.Color,
 }
 
+DialogueSegment :: struct {
+	text: 		string,
+	timerShow: 	f32,
+}
+
 gui: GUI
 ground: 			Ground
 character_player: 	CharacterPlayer
@@ -79,6 +84,8 @@ screenFadeColor:	raylib.Color
 height: 	i32
 width: 		i32
 timerInputCooldown:			f32
+
+//dialogue1: [5]string{"Um", "", 3, 4, 5}
 
 
 main :: proc () {
@@ -119,6 +126,9 @@ main :: proc () {
 	defer raylib.UnloadTexture(plant1.texture)
 	defer raylib.UnloadTexture(chat_bl.texture)
 	{	
+		// Setup gui
+		gui.color = raylib.WHITE
+		gui.fontSize = 20
 		// Starting positions
 		ground.centerPosition = raylib.Vector2{(cast(f32)(width/2)), (cast(f32)(height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(width/2) - character_player.size.x/2), (cast(f32)(height/2) - character_player.size.y/2)}
@@ -134,9 +144,6 @@ main :: proc () {
 		}
 		// Setup screen fade
 		screenFade = MakeColorFade(3, raylib.BLACK, raylib.Color{1,1,1,0})
-		// Setup gui
-		gui.color = raylib.WHITE
-		gui.fontSize = 20
 	}
 
 	for !raylib.WindowShouldClose() {
@@ -217,25 +224,19 @@ Draw :: proc () {
 	}
 	{	// Chat bubble
 		if(chat_bl.shouldShow){
-			currentColor := gui.color
-			defer gui.color = currentColor
-			gui.color = raylib.BLACK
+  			local_scope_color(raylib.BLACK)
 			if(GUI_DrawSpeechBubble(chat_bl, "Hi!")){
 				fmt.println("Hellope!")
 			}
 		}
 	}
 	{	// Progress Bar
-		currentColor := gui.color
-		defer gui.color = currentColor
-		gui.color = raylib.BLACK
+  		local_scope_color(raylib.BLACK)
 		GUI_ProgressBarVertical(raylib.Rectangle{0,0,5,50}, "", 1, 0, 1, false)
 		GUI_ProgressBarVertical(raylib.Rectangle{5,40,5,50}, "", 1, 0, 1, false)
 	}
 	{	// Progress Bar
-		currentColor := gui.color
-		defer gui.color = currentColor
-		gui.color = raylib.WHITE
+  		local_scope_color(raylib.WHITE)
 		GUI_ProgressBarVertical(raylib.Rectangle{40,0,5,50}, "", 1, 0, 1, false)
 		GUI_ProgressBarVertical(raylib.Rectangle{45,40,5,50}, "", 1, 0, 1, false)
 	}
@@ -322,4 +323,23 @@ GUI_DrawText :: proc (text:cstring, alignment:TextAlignment, posX:i32, posY:i32,
 		scoreSizeLeft := raylib.MeasureText(text, fontSize)
 		raylib.DrawText(text, (posX - scoreSizeLeft), posY, fontSize, color)
 	}
+}
+
+/* The following two functions make dealing with gui color easier like the following
+	{
+		currentColor := gui.color
+		defer gui.color = currentColor
+		gui.color = BLACK
+		...
+	}
+*/
+restore_color :: proc(color: raylib.Color) {
+  gui.color = color
+}
+
+@(deferred_out=restore_color)
+local_scope_color :: proc(color: raylib.Color) -> raylib.Color {
+  current_color := gui.color
+  gui.color = color
+  return current_color
 }
