@@ -1,15 +1,24 @@
 package aroots
 
+import "core:fmt"
 import "core:intrinsics"
 import "core:math"
+import "core:strings"
 import raylib "vendor:raylib"
 
 InputCooldownSeconds 	:: 0.4
 StandardDimensionsX 	:: 100
 StandardDimensionsY 	:: 100
 
+TextAlignment :: enum {
+	Left, 
+	Center,
+	Right,
+}
+
 GUI :: struct{
 	color: raylib.Color,
+	fontSize: i32,
 }
 
 InputScheme :: struct {
@@ -17,6 +26,7 @@ InputScheme :: struct {
 	leftButton: 	raylib.KeyboardKey,
 	downButton: 	raylib.KeyboardKey,
 	rightButton:	raylib.KeyboardKey,
+	interactButton:	raylib.KeyboardKey,
 }
 
 ImageData :: struct{
@@ -36,6 +46,11 @@ CharacterPlayer :: struct {
 
 GrandMa :: struct {
   using imageData: 	ImageData,
+}
+
+ChatBubble :: struct{
+  using imageData: 	ImageData,
+  shouldShow: 		bool,
 }
 
 Plant :: struct {
@@ -58,6 +73,7 @@ ground: 			Ground
 character_player: 	CharacterPlayer
 grandma: 	GrandMa
 plant1: 			Plant
+chat_bl: 			ChatBubble
 screenFade: 		ColorFade
 screenFadeColor:	raylib.Color
 height: 	i32
@@ -86,16 +102,22 @@ main :: proc () {
 		defer raylib.UnloadImage(grandma_image)
 		plant_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plant.png")
 		defer raylib.UnloadImage(plant_image)
+		chat_bottom_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_left.png")
+		defer raylib.UnloadImage(chat_bottom_left_image)
+		chat_top_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_top_left.png")
+		defer raylib.UnloadImage(chat_top_left_image)
 
 		ResizeAndBindImageData(&ground, &ground_image, StandardDimensionsX * 8, StandardDimensionsY * 6)
 		ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&plant1, &plant_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&chat_bl, &chat_bottom_left_image, StandardDimensionsX, StandardDimensionsY)
 	}
 	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
 	defer raylib.UnloadTexture(grandma.texture)
 	defer raylib.UnloadTexture(plant1.texture)
+	defer raylib.UnloadTexture(chat_bl.texture)
 	{	
 		// Starting positions
 		ground.centerPosition = raylib.Vector2{(cast(f32)(width/2)), (cast(f32)(height/2))}
@@ -108,9 +130,13 @@ main :: proc () {
 			.A,
 			.S,
 			.D,
+			.ENTER,
 		}
 		// Setup screen fade
 		screenFade = MakeColorFade(3, raylib.BLACK, raylib.Color{1,1,1,0})
+		// Setup gui
+		gui.color = raylib.WHITE
+		gui.fontSize = 20
 	}
 
 	for !raylib.WindowShouldClose() {
@@ -131,6 +157,9 @@ Update :: proc (deltaTime:f32) {
 	if !HasHitTime(&screenFade.timerScreenFade, deltaTime) {
 		t := screenFade.timerScreenFade/ screenFade.initialTime
 		screenFadeColor = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
+	}else{
+			// Show first dialogue
+			chat_bl.shouldShow = true;
 	}
 	if HasHitTime(&timerInputCooldown, deltaTime) {
 		if(raylib.IsKeyDown(character_player.upButton)){
@@ -186,19 +215,29 @@ Draw :: proc () {
 		x,y  := ToScreenOffsetPosition(plant1);
 		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
 	}
+	{	// Chat bubble
+		if(chat_bl.shouldShow){
+			currentColor := gui.color
+			defer gui.color = currentColor
+			gui.color = raylib.BLACK
+			if(GUI_DrawSpeechBubble(chat_bl, "Hi!")){
+				fmt.println("Hellope!")
+			}
+		}
+	}
 	{	// Progress Bar
 		currentColor := gui.color
 		defer gui.color = currentColor
 		gui.color = raylib.BLACK
-		ProgressBarVertical(raylib.Rectangle{0,0,5,50}, "", 1, 0, 1, false)
-		ProgressBarVertical(raylib.Rectangle{5,40,5,50}, "", 1, 0, 1, false)
+		GUI_ProgressBarVertical(raylib.Rectangle{0,0,5,50}, "", 1, 0, 1, false)
+		GUI_ProgressBarVertical(raylib.Rectangle{5,40,5,50}, "", 1, 0, 1, false)
 	}
 	{	// Progress Bar
 		currentColor := gui.color
 		defer gui.color = currentColor
 		gui.color = raylib.WHITE
-		ProgressBarVertical(raylib.Rectangle{40,0,5,50}, "", 1, 0, 1, false)
-		ProgressBarVertical(raylib.Rectangle{45,40,5,50}, "", 1, 0, 1, false)
+		GUI_ProgressBarVertical(raylib.Rectangle{40,0,5,50}, "", 1, 0, 1, false)
+		GUI_ProgressBarVertical(raylib.Rectangle{45,40,5,50}, "", 1, 0, 1, false)
 	}
 	{	// Screen Fade
 		if(screenFade.timerScreenFade > 0){
@@ -240,12 +279,27 @@ ColorLerp :: proc(from:raylib.Color, to:raylib.Color, t:f32) -> raylib.Color {
     return raylib.Color{r,g,b,a}
 }
 
-ProgressBarVertical :: proc(bounds: raylib.Rectangle, 
-							text: string,	// ignore for now
-        					value : f32,
-        					min_value : f32,	// ignore for now
-        					max_value : f32,// ignore for now
-        					show_value : bool) -> f32 {
+GUI_DrawSpeechBubble :: proc(imageData: ImageData, 
+					 	 	 text: string) -> bool {
+	fontSize := gui.fontSize
+	topLeftX:= cast(i32)imageData.centerPosition.x
+	topLeftY:= cast(i32)imageData.centerPosition.y
+	centerX:= topLeftX + cast(i32)(imageData.size.x/2)
+	centerY:= topLeftY + cast(i32)(imageData.size.y/2)
+	newText := strings.clone_to_cstring(text)
+	defer delete(newText)
+
+	raylib.DrawTexture(imageData.texture, topLeftX, topLeftY, raylib.WHITE)       
+	GUI_DrawText(newText, TextAlignment.Center, centerX, centerY, fontSize)
+    return raylib.IsKeyDown(character_player.interactButton)
+}
+
+GUI_ProgressBarVertical :: proc(bounds: raylib.Rectangle, 
+								text: string,	// ignore for now
+								value : f32,
+								min_value : f32,	// ignore for now
+								max_value : f32,// ignore for now
+								show_value : bool) -> f32 {
 	color := gui.color
 	newValue := clamp(0, 1, value)
 	x := cast(i32)bounds.x
@@ -255,4 +309,17 @@ ProgressBarVertical :: proc(bounds: raylib.Rectangle,
 	raylib.DrawRectangle(x, y, w, h, color)	
 	// Should/could draw text
     return newValue	// should be a scale instead of clamp
+}
+
+GUI_DrawText :: proc (text:cstring, alignment:TextAlignment, posX:i32, posY:i32, fontSize :i32){
+	color := gui.color
+	if alignment == .Left {
+		 raylib.DrawText(text, posX, posY, fontSize, color)
+	} else if alignment == .Center {
+		scoreSizeLeft := raylib.MeasureText(text, fontSize)
+		raylib.DrawText(text, (posX - scoreSizeLeft/2), posY, fontSize, color)
+	} else if alignment == .Right {
+		scoreSizeLeft := raylib.MeasureText(text, fontSize)
+		raylib.DrawText(text, (posX - scoreSizeLeft), posY, fontSize, color)
+	}
 }
