@@ -114,6 +114,7 @@ ColorFade :: struct {
 GameState :: struct {
 	has_game_started: 			bool,
 	number_of_seeds_picked_up:	int,
+	number_of_seeds_planted:	int,
 }
 
 gui: GUI
@@ -319,7 +320,7 @@ Update :: proc (deltaTime:f32) {
 				SetActiveDialogue(&first_seeds_dialogue)
 			} else if(game_state.number_of_seeds_picked_up == 3) {
 				SetActiveDialogue(&first_seeds_dialogue)
-			}
+			} 
 			game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
 		}
 		if(plot_1.hovering) {
@@ -327,6 +328,10 @@ Update :: proc (deltaTime:f32) {
 			if(crate_red.selected){
 				fmt.println("we water or put down seeds")
 				plot_1.state = plot_1.state + 1
+				game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
+				if(game_state.number_of_seeds_picked_up >= 6) {
+					SetActiveDialogue(&all_done_seeds_dialogue)
+				}
 			}else{
 				fmt.println("You aint got no seeds")
 				SetActiveDialogue(&no_seeds_dialogue)

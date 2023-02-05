@@ -1,6 +1,8 @@
 package aroots
 
 import "core:math/rand"
+import "core:intrinsics"
+import "core:fmt"
 
 RandomUniqueStrings :: struct{
 	strings: map[string]bool,
