@@ -69,6 +69,10 @@ GrandMa :: struct {
   using imageData: 	ImageData,
 }
 
+Bed :: struct {
+  using imageData: 	ImageData,
+}
+
 Equipment :: struct {
 	watercanImageData: 	ImageData,
 	seedBagImageData: 	ImageData,
@@ -125,6 +129,7 @@ gui: GUI
 ground: 			Ground
 character_player: 	CharacterPlayer
 grandma: 			GrandMa
+bed: 			Bed
 equipment: 		Equipment
 crate_red: 			Crate
 plot_1: 				Plot
@@ -176,6 +181,8 @@ main :: proc () {
 	defer raylib.UnloadImage(equipment_seed_bag_image)	
 	grandma_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/grandma.png")
 	defer raylib.UnloadImage(grandma_image)
+	bed_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/bed.png")
+	defer raylib.UnloadImage(bed_image)
 	plot_plot_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_plot.png")
 	defer raylib.UnloadImage(plot_plot_image)
 	plot_seeds_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_seeds.png")
@@ -194,6 +201,7 @@ main :: proc () {
 	ResizeAndBindImageData(&ground, &ground_image, screen_width, screen_height)
 	ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
 	ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
+	ResizeAndBindImageData(&bed, &bed_image, StandardDimensionsX, StandardDimensionsY)
 	ResizeAndBindImageData(&equipment.watercanImageData, &equipment_watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
 	ResizeAndBindImageData(&equipment.seedBagImageData, &equipment_seed_bag_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
 	for a_plot in plots {
@@ -214,6 +222,7 @@ main :: proc () {
 		ground.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2)), (cast(f32)(screen_height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
 		grandma.centerPosition = raylib.Vector2{cast(f32)(screen_width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
+		bed.centerPosition = raylib.Vector2{grandma.centerPosition.x, grandma.centerPosition.y + 100}
 		bias:= 0
 		for a_plot in plots {
 			a_plot.plotImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
@@ -286,6 +295,7 @@ Update :: proc (deltaTime:f32) {
 		}
 	}
 	if HasHitTime(&timerInputCooldown, deltaTime) {
+		previousPosition := character_player.centerPosition
 		if(actions.up){
 			actions.up = false
 			timerInputCooldown = InputCooldownSeconds
@@ -313,20 +323,14 @@ Update :: proc (deltaTime:f32) {
 			character_player.lastDirectionRight = true
 		}
 		// Keep player in level bounds
-		if character_player.centerPosition.x+(character_player.size.x/2) > cast(f32)(screen_width) {
-			character_player.centerPosition.x = cast(f32)(screen_width) - (character_player.size.x / 2)
-		}
-		if character_player.centerPosition.x-(character_player.size.x/2) < 0 {
-			character_player.centerPosition.x = (character_player.size.x / 2)
-		}
-		if character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(screen_height) {
-			character_player.centerPosition.y = cast(f32)(screen_height) - (character_player.size.y / 2)
-		}
-		if character_player.centerPosition.y-(character_player.size.y/2) < 0 {
-			character_player.centerPosition.y = (character_player.size.y / 2)
+		boundsRight := 	character_player.centerPosition.x+(character_player.size.x/2) > cast(f32)(screen_width)
+		boundsLeft := 	character_player.centerPosition.x-(character_player.size.x/2) < 0
+		boundsBottom :=	character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(screen_height)
+		boundsTop := 	character_player.centerPosition.y-(character_player.size.y/2) < 0
+		if boundsRight || boundsLeft || boundsBottom || boundsTop {
+			character_player.centerPosition = previousPosition
 		}
 		// Detect by objects of interest
-
 		for a_plot in plots {
 			a_plot.hovering = false
 		}
@@ -344,6 +348,16 @@ Update :: proc (deltaTime:f32) {
 			if(character_player.centerPosition.x >=700) {
 				crate_red.hovering = true
 			}			
+		}
+		// Set equipment to player position
+		equipment.watercanImageData.centerPosition = character_player.centerPosition
+		equipment.seedBagImageData.centerPosition = character_player.centerPosition
+		// Can't walk on grandma
+		if(HasAABBCollision(grandma, equipment.watercanImageData)){
+			character_player.centerPosition = previousPosition
+			// Set equipment to player position after moving back
+			equipment.watercanImageData.centerPosition = character_player.centerPosition
+			equipment.seedBagImageData.centerPosition = character_player.centerPosition
 		}
 	}
 
@@ -409,6 +423,10 @@ Draw :: proc () {
 				raylib.DrawTexture(a_plot.seededImageData.texture, x, y, raylib.WHITE)
 			}
 		}
+	}
+	{	// Bed
+		x,y := ToScreenOffsetPosition(bed)
+		raylib.DrawTexture(bed.texture, x, y, raylib.WHITE)
 	}
 	{	// Player
 		x,y := ToScreenOffsetPosition(character_player)
