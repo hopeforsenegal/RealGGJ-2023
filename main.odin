@@ -380,16 +380,6 @@ Draw :: proc () {
 			}
 		}
 	}
-	{	// Progress Bar
-  		local_scope_color(raylib.BLACK)
-		GUI_ProgressBarVertical(raylib.Rectangle{0,0,5,50}, "", 1, 0, 1, false)
-		GUI_ProgressBarVertical(raylib.Rectangle{5,40,5,50}, "", 1, 0, 1, false)
-	}
-	{	// Progress Bar
-  		local_scope_color(raylib.WHITE)
-		GUI_ProgressBarVertical(raylib.Rectangle{40,0,5,50}, "", 1, 0, 1, false)
-		GUI_ProgressBarVertical(raylib.Rectangle{45,40,5,50}, "", 1, 0, 1, false)
-	}
 	{	// Screen Fade
 		if(screenFade.timerColorFade > 0){
 			raylib.DrawRectangle(0, 0, screen_width, screen_height, screenFade.colorCurrent)
@@ -473,23 +463,6 @@ GUI_DrawSpeechBubble :: proc(imageData: ImageData, text: string) {
 
 	raylib.DrawTexture(imageData.texture, topLeftX, topLeftY, raylib.WHITE)
 	GUI_DrawText(newText, TextAlignment.Center, centerX, centerY - yBias, fontSize)
-}
-
-GUI_ProgressBarVertical :: proc(bounds: raylib.Rectangle, 
-								text: string,	// ignore for now
-								value : f32,
-								min_value : f32,	// ignore for now
-								max_value : f32,// ignore for now
-								show_value : bool) -> f32 {
-	color := gui.color
-	newValue := clamp(0, 1, value)
-	x := cast(i32)bounds.x
-	y := cast(i32)bounds.y
-	w := cast(i32)bounds.width
-	h := cast(i32)(bounds.height * newValue)
-	raylib.DrawRectangle(x, y, w, h, color)	
-	// Should/could draw text
-    return newValue	// should be a scale instead of clamp
 }
 
 GUI_DrawText :: proc (text:cstring, alignment:TextAlignment, posX:i32, posY:i32, fontSize :i32){
