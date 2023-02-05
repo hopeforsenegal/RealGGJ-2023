@@ -18,7 +18,8 @@ StartingCratePositionY :: 575
 DurationScreenFade			:: 3
 DurationSelectedCrateFade 	:: 1
 
-ColorHalfTransparent 	:: raylib.Color{255,255,255,120}
+ColorHalfTransparent 	:: raylib.Color{255,255,255,125}
+ColorQuarterTransparent :: raylib.Color{255,255,255,60}
 ColorTransparent 		:: raylib.Color{1,1,1,0}
 
 TextAlignment :: enum {
@@ -265,7 +266,7 @@ main :: proc () {
 	for a_crate in crates {
 		ResizeAndBindImageData(&a_crate.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
 		ResizeAndBindImageData(&a_crate.innerImageData, &crate_seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
-		ResizeAndBindImageData(&a_crate.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
+		ResizeAndBindImageData(&a_crate.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y + 20)
 	}
 	ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	ResizeAndBindImageData(&menu.foreImageData, &menu_fore_image, 1000, 1000)
@@ -291,7 +292,7 @@ main :: proc () {
 		for a_crate in crates {
 			a_crate.outerImageData.centerPosition = raylib.Vector2{StartingCratePositionX + cast(f32)bias, StartingCratePositionY}
 			a_crate.innerImageData.centerPosition = raylib.Vector2{StartingCratePositionX + cast(f32)bias, StartingCratePositionY}
-			a_crate.bloomImageData.centerPosition = raylib.Vector2{StartingCratePositionX + cast(f32)bias, StartingCratePositionY}
+			a_crate.bloomImageData.centerPosition = raylib.Vector2{StartingCratePositionX + cast(f32)bias, StartingCratePositionY - 10}
 			bias = bias + 100
 		}
 		
@@ -313,7 +314,7 @@ main :: proc () {
 		// Setup various fades
 		fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
 		for a_crate in crates {
-			a_crate.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
+			a_crate.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorQuarterTransparent)
 		}
 		for a_plot in plots {
 			a_plot.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
