@@ -108,6 +108,12 @@ ChatBubble :: struct{
   using imageData: 	ImageData,
 }
 
+Menu :: struct{
+  foreImageData: 	ImageData,
+  backImageData: 	ImageData,
+  titleImageData: 	ImageData,
+}
+
 ColorFade :: struct {
 	timerColorFade: 	f32,
 	initialTime: 		f32,
@@ -117,6 +123,7 @@ ColorFade :: struct {
 }
 
 GameState :: struct {
+	is_menu:				bool,
 	is_sleeping:				bool,
 	has_game_started: 			bool,
 	has_picked_up_seeds:		bool,
@@ -138,6 +145,7 @@ plot_5: 				Plot
 plot_6: 				Plot
 plots: [6]^Plot
 chat_br: 			ChatBubble
+menu:		Menu
 fadeBlackToClear: 		ColorFade
 fadeClearToBlack: 		ColorFade
 screen_height: 		i32
@@ -169,6 +177,8 @@ main :: proc () {
 	screen_height = raylib.GetScreenHeight()
 	screen_width = raylib.GetScreenWidth()
 
+	game_state.is_menu = true
+
 	// Load images
 	ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
 	defer raylib.UnloadImage(ground_image)		
@@ -196,6 +206,12 @@ main :: proc () {
 	defer raylib.UnloadImage(selection_bloom_image)
 	chat_bottom_right_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_right.png")
 	defer raylib.UnloadImage(chat_bottom_right_image)
+	menu_fore_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/menu.png")
+	defer raylib.UnloadImage(menu_fore_image)
+	menu_back_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/menu_background.png")
+	defer raylib.UnloadImage(menu_back_image)
+	menu_title_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/title.png")
+	defer raylib.UnloadImage(menu_title_image)
 
 	ResizeAndBindImageData(&ground, &ground_image, screen_width, screen_height)
 	ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
@@ -213,6 +229,10 @@ main :: proc () {
 	ResizeAndBindImageData(&crate_red.innerImageData, &crate_seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
 	ResizeAndBindImageData(&crate_red.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
 	ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
+	ResizeAndBindImageData(&menu.foreImageData, &menu_fore_image, 1000, 1000)
+	ResizeAndBindImageData(&menu.backImageData, &menu_back_image, 1000, 1000)
+	ResizeAndBindImageData(&menu.titleImageData, &menu_title_image, 600, 400)
+
 	{	
 		// Setup gui
 		// Starting positions
@@ -270,6 +290,14 @@ main :: proc () {
 }
 
 Update :: proc (deltaTime:f32) {
+	if(game_state.is_menu){
+		fmt.println("in menu")
+		if(raylib.GetKeyPressed() > .APOSTROPHE || raylib.IsMouseButtonDown(.LEFT)){
+			fmt.println("exit menu ", raylib.GetKeyPressed())
+			game_state.is_menu = false
+		}
+		return
+	}
     actions := GetUserActions(character_player)
 
 	// Fadings
@@ -456,10 +484,20 @@ Update :: proc (deltaTime:f32) {
 	}
 	if(hasWin){
 		fmt.println("You deserve an explination")
+		// if the right combination game over
+		// if wrong combination give a hint and then ask to go to sleep so we can reset
+		//if()
 	}
 }
 
 Draw :: proc () {
+	if(game_state.is_menu){
+		raylib.DrawTexture(menu.backImageData.texture, -100, -200, raylib.WHITE)
+		raylib.DrawTexture(menu.foreImageData.texture, -100, -200, raylib.WHITE)
+		raylib.DrawTexture(menu.titleImageData.texture, +100, -100, raylib.WHITE)
+		return
+	}
+
 	{	// Ground
 		x,y  := ToScreenOffsetPosition(ground)
 		raylib.DrawTexture(ground.texture, x, y, raylib.WHITE)
