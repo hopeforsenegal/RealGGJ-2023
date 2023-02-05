@@ -20,7 +20,8 @@ halfway_first_batch_seeds_dialogue: 	ChainedDialogue
 all_done_seeds_dialogue: ChainedDialogue
 no_seeds_dialogue: 		ChainedDialogue
 more_red_dialogue: 		ChainedDialogue
-green_black_mix_dialouge: ChainedDialogue
+green_black_mix_dialouge: 	ChainedDialogue
+swap_green_black_dialouge: 	ChainedDialogue
 red_ends_dialouge:			ChainedDialogue
 why_close_dialogue1: ChainedDialogue
 why_close_dialogue2: ChainedDialogue
@@ -189,6 +190,17 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
 	}
 	{
+		dialogue := &swap_green_black_dialouge
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Uh child!\nYou need\n some tea?", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="You confusing\nthe people", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="with their\nwealth!", timerText=3}
+		dialogue.dialogueSegments[3] = DialogueSegment{text="Now try again!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
+	}	
+	{
 		dialogue := &one_of_each_dialogue
 		dialogue.dialogueIndex = -1
 		dialogue.dialogueSegments[0] = DialogueSegment{text="No child!\nNo!", timerText=4}
@@ -205,7 +217,7 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueSegments[0] = DialogueSegment{text="Blasted child!\nNo!", timerText=4}
 		dialogue.dialogueSegments[1] = DialogueSegment{text="blood is\nbetween", timerText=3}
 		dialogue.dialogueSegments[2] = DialogueSegment{text="the people\nand their\nwealth!", timerText=3}
-		dialogue.dialogueSegments[3] = DialogueSegment{text="Now try again!", timerText=3}
+		dialogue.dialogueSegments[3] = DialogueSegment{text="Still close\nbut again!", timerText=3}
 		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
 		assert(ok)
 		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}

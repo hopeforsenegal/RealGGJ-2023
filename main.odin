@@ -269,7 +269,7 @@ main :: proc () {
 	ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	ResizeAndBindImageData(&menu.foreImageData, &menu_fore_image, 1000, 1000)
 	ResizeAndBindImageData(&menu.backImageData, &menu_back_image, 1000, 1000)
-	ResizeAndBindImageData(&menu.titleImageData, &menu_title_image, 600, 400)
+	ResizeAndBindImageData(&menu.titleImageData, &menu_title_image, 550, 350)
 
 	{	
 		// Setup gui
@@ -633,8 +633,13 @@ Update :: proc (deltaTime:f32) {
 						fmt.println("You need red at the ends!")
 						SetActiveDialogue(&red_ends_dialouge)
 					}else{
-						fmt.println("You need red between black and green!")
-						SetActiveDialogue(&green_black_mix_dialouge)
+						if(plot_2.seed_type == 2){
+							fmt.println("You need to probably swap!")
+							SetActiveDialogue(&swap_green_black_dialouge)
+						}else{
+							fmt.println("You need red between black and green!")
+							SetActiveDialogue(&green_black_mix_dialouge)
+						}
 					}
 				}
 			}
@@ -646,7 +651,7 @@ Draw :: proc () {
 	if(game_state.is_menu){
 		raylib.DrawTexture(menu.backImageData.texture, -100, -200, raylib.WHITE)
 		raylib.DrawTexture(menu.foreImageData.texture, -100, -200, raylib.WHITE)
-		raylib.DrawTexture(menu.titleImageData.texture, +100, -100, raylib.WHITE)
+		raylib.DrawTexture(menu.titleImageData.texture, +150, -50, raylib.WHITE)
 		return
 	}
 
