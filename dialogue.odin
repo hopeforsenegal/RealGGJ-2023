@@ -60,6 +60,8 @@ SetupAllDialogue :: proc() {
 		"Granny\nflirting with\nthe ancestors!",
 		"Granny\n*yawn*\nwhat was..?",
 		"Granny\nskin gettin\nleathery",
+		"Granny\nheart stopped\n5 minutes ago",
+		"Granny\nheart stopped\n5 minutes ago",
 		"Granny\n... ..\nzzZzzz",
 		"Granny\n... ..\nzzZzzz",
 		"Granny\n... ..\nzzZzzz",
@@ -136,7 +138,8 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueSegments[2] = DialogueSegment{text="get moving!", timerText=3}
 		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
 		assert(ok)
-		dia
+		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
 	{
 		dialogue := &wake_up_dialogue2
 		dialogue.dialogueIndex = -1
@@ -145,7 +148,8 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueSegments[2] = DialogueSegment{text="get moving!", timerText=3}
 		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
 		assert(ok)
-		dia
+		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
 	{
 		dialogue := &wake_up_dialogue3
 		dialogue.dialogueIndex = -1

@@ -383,7 +383,7 @@ Update :: proc (deltaTime:f32) {
 				case 0: SetActiveDialogue(&wake_up_dialogue1)
 				case 1: SetActiveDialogue(&wake_up_dialogue2)
 				case 2: SetActiveDialogue(&wake_up_dialogue3)
-			}logue)
+			}
 			fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
 			// update plant states
 			for a_plot in plots {
