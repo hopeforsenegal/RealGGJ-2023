@@ -549,7 +549,11 @@ Update :: proc (deltaTime:f32) {
 								SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
 							}else if(game_state.number_of_seeds_planted >= 6) {
 								fmt.println("Planted all the seeds of the day ", game_state.number_of_seeds_planted)
-								SetActiveDialogue(&all_done_seeds_dialogue)
+								r := cast(int)(rand.uint64()%2)
+								switch r {
+									case 0: SetActiveDialogue(&all_done_seeds_dialogue1)
+									case 1: SetActiveDialogue(&all_done_seeds_dialogue2)
+								}
 							}
 						}
 					}else{
@@ -761,11 +765,11 @@ Draw :: proc () {
 
 GetUserActions :: proc(using input: InputScheme) ->Actions {
 	return Actions {
-				left = raylib.IsKeyDown(leftButton)|| raylib.IsKeyDown(leftButton2),
-				up = raylib.IsKeyDown(upButton)|| raylib.IsKeyDown(upButton2),
-				down = raylib.IsKeyDown(downButton)|| raylib.IsKeyDown(downButton2),
-				right = raylib.IsKeyDown(rightButton)|| raylib.IsKeyDown(rightButton2),
-				interact = raylib.IsKeyDown(interactButton)|| raylib.IsKeyDown(interactButton2) || raylib.IsKeyDown(interactButton3),
+				left 		= raylib.IsKeyDown(leftButton)	|| raylib.IsKeyDown(leftButton2),
+				up 			= raylib.IsKeyDown(upButton)	|| raylib.IsKeyDown(upButton2),
+				down 		= raylib.IsKeyDown(downButton)	|| raylib.IsKeyDown(downButton2),
+				right 		= raylib.IsKeyDown(rightButton)	|| raylib.IsKeyDown(rightButton2),
+				interact 	= raylib.IsKeyDown(interactButton)|| raylib.IsKeyDown(interactButton2) || raylib.IsKeyDown(interactButton3),
 			}
 }
 

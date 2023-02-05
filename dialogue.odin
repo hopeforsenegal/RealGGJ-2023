@@ -17,7 +17,8 @@ wake_up_dialogue1: 	ChainedDialogue
 wake_up_dialogue2: 	ChainedDialogue
 wake_up_dialogue3: 	ChainedDialogue
 halfway_first_batch_seeds_dialogue: 	ChainedDialogue
-all_done_seeds_dialogue: ChainedDialogue
+all_done_seeds_dialogue1: ChainedDialogue
+all_done_seeds_dialogue2: ChainedDialogue
 no_seeds_dialogue: 		ChainedDialogue
 more_red_dialogue: 		ChainedDialogue
 green_black_mix_dialouge: 	ChainedDialogue
@@ -108,12 +109,23 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}
 	}
 	{
-		dialogue := &all_done_seeds_dialogue
+		dialogue := &all_done_seeds_dialogue1
 		dialogue.dialogueIndex = -1
 		dialogue.dialogueSegments[0] = DialogueSegment{text="Well its\nbed time", timerText=3}
 		dialogue.dialogueSegments[1] = DialogueSegment{text="Go ahead and", timerText=2.5}
 		dialogue.dialogueSegments[2] = DialogueSegment{text="go to\nsleep over there\n...", timerText=3}
 		dialogue.dialogueSegments[3] = DialogueSegment{text="Sweet cheeks", timerText=1}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &all_done_seeds_dialogue2
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Bed time\ncupcake!", timerText=3}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="Go ahead and", timerText=2.5}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="go rest\n down over there", timerText=3}
+		dialogue.dialogueSegments[3] = DialogueSegment{text="Sugar plum", timerText=1}
 		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
 		assert(ok)
 		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
