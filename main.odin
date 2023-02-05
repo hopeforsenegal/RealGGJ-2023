@@ -275,7 +275,7 @@ main :: proc () {
 		// Setup gui
 		// Starting positions
 		ground.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2)), (cast(f32)(screen_height/2))}
-		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
+		character_player.centerPosition = raylib.Vector2{cast(f32)(cast(f32)screen_width - cast(f32)(StandardDimensionsX * 2) + cast(f32)(character_player.size.x/2)), (cast(f32)(screen_height/2) + character_player.size.y/2)}
 		grandma.centerPosition = raylib.Vector2{cast(f32)(screen_width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
 		bed.centerPosition = raylib.Vector2{grandma.centerPosition.x, grandma.centerPosition.y + 200}
 		bias := 0
