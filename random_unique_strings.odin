@@ -27,7 +27,7 @@ Destroy_RandomUniqueStrings :: proc(randomUniqueStrings:^RandomUniqueStrings) {
 }
 
 GetString_RandomUniqueStrings :: proc(randomUniqueStrings:^RandomUniqueStrings) ->(string, bool) {
-	for str in randomUniqueStrings.copy_strings {
+	for str in randomUniqueStrings.copy_strings {	// do it this way because maps sort by index and will no longer be random
 		value, ok := randomUniqueStrings.strings[str]
 		if(ok && !value){
 			randomUniqueStrings.strings[str] = true

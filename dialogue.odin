@@ -13,6 +13,7 @@ DialogueSegment :: struct {
 intro_dialogue: 		ChainedDialogue
 early_bed_dialogue: 		ChainedDialogue
 first_seeds_dialogue: 	ChainedDialogue
+wake_up_dialogue: 	ChainedDialogue
 halfway_first_batch_seeds_dialogue: 	ChainedDialogue
 all_done_seeds_dialogue: ChainedDialogue
 no_seeds_dialogue: 		ChainedDialogue
@@ -42,6 +43,7 @@ SetupAllDialogue :: proc() {
 		"Granny\nsoon head to\nthe glue shop!",
 		"Granny\nflirting with\nthe ancestors!",
 		"Granny\n*yawn*\nwhat was..?",
+		"Granny\nskin gettin\nleathery",
 		"Granny\n... ..\nzzZzzz",
 	}
 	Create_RandomUniqueStrings(&random_old_dialouge, random_old_dialouge_strings[:])
@@ -104,6 +106,16 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueSegments[0] = DialogueSegment{text="What is \nyou doin?!", timerText=3}
 		dialogue.dialogueSegments[1] = DialogueSegment{text="Don't go to\nsleep", timerText=3}
 		dialogue.dialogueSegments[2] = DialogueSegment{text="before Granny!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &wake_up_dialogue
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Bout time you\nwoke up!", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="Our ancestors\nweren't lazy", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="get moving!", timerText=3}
 		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
 		assert(ok)
 		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}

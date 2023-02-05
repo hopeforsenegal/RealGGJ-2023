@@ -121,6 +121,7 @@ ColorFade :: struct {
 }
 
 GameState :: struct {
+	is_sleeping:				bool,
 	has_game_started: 			bool,
 	has_picked_up_seeds:		bool,
 	number_of_seeds_picked_up:	int,
@@ -142,7 +143,8 @@ plot_5: 				Plot
 plot_6: 				Plot
 plots: [6]^Plot
 chat_br: 			ChatBubble
-screenFade: 		ColorFade
+fadeBlackToClear: 		ColorFade
+fadeClearToBlack: 		ColorFade
 screen_height: 		i32
 screen_width: 		i32
 timerInputCooldown:			f32
@@ -251,7 +253,7 @@ main :: proc () {
 			.SPACE,
 		}
 		// Setup various fades
-		screenFade = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
+		fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
 		crate_red.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
 		for a_plot in plots {
 			a_plot.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
@@ -277,14 +279,33 @@ main :: proc () {
 Update :: proc (deltaTime:f32) {
     actions := GetUserActions(character_player)
 
-	if !HasHitTime(&screenFade.timerColorFade, deltaTime) {
-		t := screenFade.timerColorFade/ screenFade.initialTime
-		screenFade.colorCurrent = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
-	}else{
+	// Fadings
+	if !HasHitTime(&fadeBlackToClear.timerColorFade, deltaTime) {
+		t := fadeBlackToClear.timerColorFade/ fadeBlackToClear.initialTime
+		fadeBlackToClear.colorCurrent = ColorLerp(fadeBlackToClear.colorTo, fadeBlackToClear.colorFrom, t)
+	}
+	if !HasHitTime(&fadeClearToBlack.timerColorFade, deltaTime) {
+		t := fadeClearToBlack.timerColorFade/ fadeClearToBlack.initialTime
+		fadeClearToBlack.colorCurrent = ColorLerp(fadeClearToBlack.colorTo, fadeClearToBlack.colorFrom, t)
+	}
+
+	if(fadeBlackToClear.timerColorFade < 0) {
 		if(!game_state.has_game_started){
 			game_state.has_game_started = true
 			// Show first dialogue
 			SetActiveDialogue(&intro_dialogue)
+		}
+	}
+	if(fadeClearToBlack.timerColorFade < 0) {
+		if(game_state.is_sleeping){
+			fmt.println("wake up")
+			game_state.is_sleeping = false
+			SetActiveDialogue(&wake_up_dialogue)
+			fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
+			// update plant states
+			for a_plot in plots {
+				a_plot.state = a_plot.state + 1
+			}
 		}
 	}
 
@@ -296,6 +317,7 @@ Update :: proc (deltaTime:f32) {
 			ProgressDialogueIfReady(activeDialogue)
 		}
 	}
+
 	if HasHitTime(&timerInputCooldown, deltaTime) {
 		previousPosition := character_player.centerPosition
 		if(actions.up){
@@ -341,7 +363,7 @@ Update :: proc (deltaTime:f32) {
 			if(HasAABBCollision(a_plot.plotImageData, equipment.watercanImageData)){
 				a_plot.is_hovering = true
 				fmt.println("on plot ", a_plot.name)
-				break;
+				break
 			}
 		}
 		crate_red.is_hovering = false
@@ -401,9 +423,13 @@ Update :: proc (deltaTime:f32) {
 			}
 		}
 		if(bed.is_hovering){
-			fmt.println("You trying to go to bed")
 			if(game_state.number_of_seeds_planted < 6){
+				fmt.println("You trying to go to bed early")
 				SetActiveDialogue(&early_bed_dialogue)
+			}else{
+				fmt.println("You trying to go to bed on time")
+				fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
+				game_state.is_sleeping = true
 			}
 		}
 	}
@@ -424,13 +450,16 @@ Draw :: proc () {
 	}
 	{	// Plants
 		for a_plot in plots {
+			imageData : ImageData
 			if(a_plot.state == 0) {
-				x,y  := ToScreenOffsetPosition(a_plot.plotImageData)
-				raylib.DrawTexture(a_plot.plotImageData.texture, x, y, raylib.WHITE)
+				imageData = a_plot.plotImageData
+			} else if a_plot.state == 1 {
+				imageData = a_plot.seededImageData
 			} else {
-				x,y  := ToScreenOffsetPosition(a_plot.seededImageData)
-				raylib.DrawTexture(a_plot.seededImageData.texture, x, y, raylib.WHITE)
+				imageData = a_plot.plantImageData
 			}
+			x,y  := ToScreenOffsetPosition(imageData)
+			raylib.DrawTexture(imageData.texture, x, y, raylib.WHITE)
 		}
 	}
 	{	// Bed
@@ -479,8 +508,11 @@ Draw :: proc () {
 		}
 	}
 	{	// Screen Fade
-		if(screenFade.timerColorFade > 0) {
-			raylib.DrawRectangle(0, 0, screen_width, screen_height, screenFade.colorCurrent)
+		if(fadeBlackToClear.timerColorFade > 0) {
+			raylib.DrawRectangle(0, 0, screen_width, screen_height, fadeBlackToClear.colorCurrent)
+		}
+		if(fadeClearToBlack.timerColorFade > 0) {
+			raylib.DrawRectangle(0, 0, screen_width, screen_height, fadeClearToBlack.colorCurrent)
 		}
 	}
 }
