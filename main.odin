@@ -68,8 +68,9 @@ GrandMa :: struct {
   using imageData: 	ImageData,
 }
 
-WateringCan :: struct {
-  using imageData: 	ImageData,
+Equipment :: struct {
+	watercanImageData: 	ImageData,
+	seedBagImageData: 	ImageData,
 }
 
 Plot :: struct {
@@ -115,9 +116,9 @@ gui: GUI
 ground: 			Ground
 character_player: 	CharacterPlayer
 grandma: 			GrandMa
-watering_can: 		WateringCan
-red_crate: 			Crate
-plot1: 				Plot
+equipment: 		Equipment
+crate_red: 			Crate
+plot_1: 				Plot
 chat_br: 			ChatBubble
 screenFade: 		ColorFade
 screen_height: 		i32
@@ -141,60 +142,61 @@ main :: proc () {
 
 	ground = Ground{}
 	character_player = CharacterPlayer{}
+	equipment = Equipment{}
 	grandma = GrandMa{}
-	plot1 = Plot{}
-	red_crate = Crate{}
+	plot_1 = Plot{}
+	crate_red = Crate{}
 	{	// Load images
 		ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
 		defer raylib.UnloadImage(ground_image)		
 		character_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/character.png")
 		defer raylib.UnloadImage(character_image)	
-		watering_can_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/watering_can.png")
-		defer raylib.UnloadImage(watering_can_image)	
+		equipment_watering_can_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/equipment_watering_can.png")
+		defer raylib.UnloadImage(equipment_watering_can_image)	
+		equipment_seed_bag_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/equipment_seed_bag.png")
+		defer raylib.UnloadImage(equipment_seed_bag_image)	
 		grandma_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/grandma.png")
 		defer raylib.UnloadImage(grandma_image)
-		plot_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot.png")
-		defer raylib.UnloadImage(plot_image)
-		seeds_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/seeds.png")
-		defer raylib.UnloadImage(seeds_image)
-		plant_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plant.png")
-		defer raylib.UnloadImage(plant_image)
+		plot_plot_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_plot.png")
+		defer raylib.UnloadImage(plot_plot_image)
+		plot_seeds_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_seeds.png")
+		defer raylib.UnloadImage(plot_seeds_image)
+		plot_plant_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_plant.png")
+		defer raylib.UnloadImage(plot_plant_image)
 		crate_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/crate.png")
 		defer raylib.UnloadImage(crate_image)
-		seed_icon_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/seed_icon.png")
-		defer raylib.UnloadImage(seed_icon_image)
+		crate_seed_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/crate_seed.png")
+		defer raylib.UnloadImage(crate_seed_image)
 		selection_bloom_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/selection_bloom.png")
 		defer raylib.UnloadImage(selection_bloom_image)
-		chat_bottom_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_left.png")
-		defer raylib.UnloadImage(chat_bottom_left_image)
 		chat_bottom_right_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_right.png")
 		defer raylib.UnloadImage(chat_bottom_right_image)
-		chat_top_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_top_left.png")
-		defer raylib.UnloadImage(chat_top_left_image)
 
 		ResizeAndBindImageData(&ground, &ground_image, screen_width, screen_height)
 		ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&watering_can, &watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
 		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&plot1.plotImageData, &plot_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&plot1.seededImageData, &seeds_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&plot1.plantImageData, &plant_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&plot1.bloomImageData, &selection_bloom_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&red_crate.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
-		ResizeAndBindImageData(&red_crate.innerImageData, &seed_icon_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
-		ResizeAndBindImageData(&red_crate.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
+		ResizeAndBindImageData(&equipment.watercanImageData, &equipment_watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
+		ResizeAndBindImageData(&equipment.seedBagImageData, &equipment_seed_bag_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
+		ResizeAndBindImageData(&plot_1.plotImageData, &plot_plot_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&plot_1.seededImageData, &plot_seeds_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&plot_1.plantImageData, &plot_plant_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&plot_1.bloomImageData, &selection_bloom_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&crate_red.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
+		ResizeAndBindImageData(&crate_red.innerImageData, &crate_seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
+		ResizeAndBindImageData(&crate_red.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
 		ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	}
 	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
-	defer raylib.UnloadTexture(watering_can.texture)
-	defer raylib.UnloadTexture(plot1.plotImageData.texture)
-	defer raylib.UnloadTexture(plot1.seededImageData.texture)
-	defer raylib.UnloadTexture(plot1.plantImageData.texture)
-	defer raylib.UnloadTexture(plot1.bloomImageData.texture)
-	defer raylib.UnloadTexture(red_crate.outerImageData.texture)
-	defer raylib.UnloadTexture(red_crate.innerImageData.texture)
-	defer raylib.UnloadTexture(red_crate.bloomImageData.texture)
+	defer raylib.UnloadTexture(equipment.watercanImageData.texture)
+	defer raylib.UnloadTexture(equipment.seedBagImageData.texture)
+	defer raylib.UnloadTexture(plot_1.plotImageData.texture)
+	defer raylib.UnloadTexture(plot_1.seededImageData.texture)
+	defer raylib.UnloadTexture(plot_1.plantImageData.texture)
+	defer raylib.UnloadTexture(plot_1.bloomImageData.texture)
+	defer raylib.UnloadTexture(crate_red.outerImageData.texture)
+	defer raylib.UnloadTexture(crate_red.innerImageData.texture)
+	defer raylib.UnloadTexture(crate_red.bloomImageData.texture)
 	defer raylib.UnloadTexture(grandma.texture)
 	defer raylib.UnloadTexture(chat_br.texture)
 	{	
@@ -205,12 +207,12 @@ main :: proc () {
 		ground.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2)), (cast(f32)(screen_height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
 		grandma.centerPosition = raylib.Vector2{cast(f32)(screen_width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
-		plot1.plotImageData.centerPosition = raylib.Vector2{cast(f32)(plot1.plotImageData.size.x/2), cast(f32)(plot1.plotImageData.size.y/2)}
-		plot1.seededImageData.centerPosition = raylib.Vector2{cast(f32)(plot1.plotImageData.size.x/2), cast(f32)(plot1.plotImageData.size.y/2)}
-		plot1.plantImageData.centerPosition = raylib.Vector2{cast(f32)(plot1.plotImageData.size.x/2), cast(f32)(plot1.plotImageData.size.y/2)}
-		red_crate.outerImageData.centerPosition = raylib.Vector2{750,575}
-		red_crate.innerImageData.centerPosition = raylib.Vector2{750,575}
-		red_crate.bloomImageData.centerPosition = raylib.Vector2{750,575}
+		plot_1.plotImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
+		plot_1.seededImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
+		plot_1.plantImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
+		crate_red.outerImageData.centerPosition = raylib.Vector2{750,575}
+		crate_red.innerImageData.centerPosition = raylib.Vector2{750,575}
+		crate_red.bloomImageData.centerPosition = raylib.Vector2{750,575}
 		chat_br.centerPosition = raylib.Vector2{grandma.centerPosition.x - 85, grandma.centerPosition.y-80}
 		// Setup input
 		character_player.input = InputScheme{
@@ -227,8 +229,8 @@ main :: proc () {
 		}
 		// Setup various fades
 		screenFade = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
-		red_crate.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
-		plot1.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
+		crate_red.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
+		plot_1.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
 		// Setup dialogue
 		chat_br.dialogueIndex = -1
 		dialogue1[0] = DialogueSegment{text="Um...", timerText=3}
@@ -317,26 +319,27 @@ Update :: proc (deltaTime:f32) {
 		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {
 			fmt.println("plant")
 		}
-		red_crate.hovering = false
+		crate_red.hovering = false
 		if character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(screen_height) - 100 {
 			if(character_player.centerPosition.x >=700){
-				red_crate.hovering = true
+				crate_red.hovering = true
 			}			
 		}
 	}
 
-	if(red_crate.hovering && actions.interact){
+	if(crate_red.hovering && actions.interact){
 		actions.interact = false
-		red_crate.selected = true
+		crate_red.selected = true
 		// deselect others
 	}
-	if(red_crate.selected){
-		red_crate.colorFadeBloom.timerColorFade = red_crate.colorFadeBloom.timerColorFade - deltaTime
-		t := red_crate.colorFadeBloom.timerColorFade/ red_crate.colorFadeBloom.initialTime
-		red_crate.colorFadeBloom.colorCurrent = ColorLerp(red_crate.colorFadeBloom.colorTo, red_crate.colorFadeBloom.colorFrom, PingPong(t, 1))		
+	if(crate_red.selected){
+		crate_red.colorFadeBloom.timerColorFade = crate_red.colorFadeBloom.timerColorFade - deltaTime
+		t := crate_red.colorFadeBloom.timerColorFade/ crate_red.colorFadeBloom.initialTime
+		crate_red.colorFadeBloom.colorCurrent = ColorLerp(crate_red.colorFadeBloom.colorTo, crate_red.colorFadeBloom.colorFrom, PingPong(t, 1))		
 	}
-	// Set watering can to player position
-	watering_can.centerPosition = character_player.centerPosition
+	// Set equipment to player position
+	equipment.watercanImageData.centerPosition = character_player.centerPosition
+	equipment.seedBagImageData.centerPosition = character_player.centerPosition
 }
 
 Draw :: proc () {
@@ -345,8 +348,8 @@ Draw :: proc () {
 		raylib.DrawTexture(ground.texture, x, y, raylib.WHITE)
 	}
 	{	// Plants
-		x,y  := ToScreenOffsetPosition(plot1.plotImageData)
-		raylib.DrawTexture(plot1.plotImageData.texture, x, y, raylib.WHITE)
+		x,y  := ToScreenOffsetPosition(plot_1.plotImageData)
+		raylib.DrawTexture(plot_1.plotImageData.texture, x, y, raylib.WHITE)
 	}
 	{	// Player
 		x,y := ToScreenOffsetPosition(character_player)
@@ -360,17 +363,17 @@ Draw :: proc () {
 		raylib.DrawTexture(grandma.texture, x, y, raylib.WHITE)
 	}
 	{	// Crate
-		if(red_crate.selected){
-			x,y  := ToScreenOffsetPosition(red_crate.bloomImageData)
-			raylib.DrawTexture(red_crate.bloomImageData.texture, x, y, red_crate.colorFadeBloom.colorCurrent)
-		}else if(red_crate.hovering){
-			x,y  := ToScreenOffsetPosition(red_crate.bloomImageData)
-			raylib.DrawTexture(red_crate.bloomImageData.texture, x, y, ColorHalfTransparent)
+		if(crate_red.selected){
+			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
+			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, crate_red.colorFadeBloom.colorCurrent)
+		}else if(crate_red.hovering){
+			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
+			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, ColorHalfTransparent)
 		}
-		x,y  := ToScreenOffsetPosition(red_crate.outerImageData)
-		raylib.DrawTexture(red_crate.outerImageData.texture, x, y, raylib.WHITE)
-		x,y  = ToScreenOffsetPosition(red_crate.innerImageData)
-		raylib.DrawTexture(red_crate.innerImageData.texture, x, y, raylib.RED)
+		x,y  := ToScreenOffsetPosition(crate_red.outerImageData)
+		raylib.DrawTexture(crate_red.outerImageData.texture, x, y, raylib.WHITE)
+		x,y  = ToScreenOffsetPosition(crate_red.innerImageData)
+		raylib.DrawTexture(crate_red.innerImageData.texture, x, y, raylib.RED)
 	}
 	{	// Chat bubble
 		if(chat_br.dialogueIndex >= 0){
@@ -390,11 +393,11 @@ Draw :: proc () {
   			local_scope_color(raylib.BLACK)
 			GUI_DrawSpeechBubble(chat_br, "test")
 
-			x,y  := ToScreenOffsetPosition(watering_can)
+			x,y  := ToScreenOffsetPosition(equipment.watercanImageData)
 			position:= raylib.Vector2{cast(f32)x, cast(f32)y}
-			texture_width := cast(f32)watering_can.texture.width * (character_player.lastDirectionRight?-1:1)
-			texture_height := cast(f32)watering_can.texture.height
-			raylib.DrawTextureRec(watering_can.texture, raylib.Rectangle{ 0,0, texture_width, texture_height }, position, raylib.WHITE)
+			texture_width := cast(f32)equipment.watercanImageData.texture.width * (character_player.lastDirectionRight?-1:1)
+			texture_height := cast(f32)equipment.watercanImageData.texture.height
+			raylib.DrawTextureRec(equipment.watercanImageData.texture, raylib.Rectangle{ 0,0, texture_width, texture_height }, position, raylib.WHITE)
 		}
 	}
 }
