@@ -71,6 +71,8 @@ GrandMa :: struct {
 
 Bed :: struct {
   using imageData: 	ImageData,
+
+	is_hovering:			bool,
 }
 
 Equipment :: struct {
@@ -86,7 +88,7 @@ Plot :: struct {
 	colorFadeBloom:		ColorFade,
 	name: string,
 
-	hovering:			bool,
+	is_hovering:			bool,
 
 	state: 				int,
 	has_had_action: 	bool,
@@ -98,8 +100,8 @@ Crate :: struct {
 	bloomImageData: ImageData,
 	colorFadeBloom:	ColorFade,
 
-	hovering:		bool,
-	selected:		bool,
+	is_hovering:		bool,
+	is_selected:		bool,
 }
 
 Ground :: struct {
@@ -332,27 +334,28 @@ Update :: proc (deltaTime:f32) {
 		}
 		// Detect by objects of interest
 		for a_plot in plots {
-			a_plot.hovering = false
-		}
-		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {		
-			for a_plot in plots {
-				// Use the watering can since its easier for collision detection
-				if(HasAABBCollision(a_plot.plotImageData, equipment.watercanImageData)){
-					a_plot.hovering = true
-					fmt.println("on plot ", a_plot.name)
-				}
+			a_plot.is_hovering = false
+		}	
+		for a_plot in plots {
+			// Use the watering can since its easier for collision detection
+			if(HasAABBCollision(a_plot.plotImageData, equipment.watercanImageData)){
+				a_plot.is_hovering = true
+				fmt.println("on plot ", a_plot.name)
+				break;
 			}
 		}
-		crate_red.hovering = false
-		if character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(screen_height) - 100 {
-			if(character_player.centerPosition.x >=700) {
-				crate_red.hovering = true
-			}			
+		crate_red.is_hovering = false
+		if HasAABBCollision(crate_red.outerImageData, equipment.watercanImageData) {
+			crate_red.is_hovering = true
+		}
+		bed.is_hovering = false
+		if HasAABBCollision(bed, equipment.watercanImageData) {
+			bed.is_hovering = true
 		}
 		// Set equipment to player position
 		equipment.watercanImageData.centerPosition = character_player.centerPosition
 		equipment.seedBagImageData.centerPosition = character_player.centerPosition
-		// Can't walk on grandma
+		// Can't walk on grandma (need the above updated equipment position for the AABB)
 		if(HasAABBCollision(grandma, equipment.watercanImageData)){
 			character_player.centerPosition = previousPosition
 			// Set equipment to player position after moving back
@@ -363,9 +366,9 @@ Update :: proc (deltaTime:f32) {
 
 	if(actions.interact) {
 		actions.interact = false
-		if(crate_red.hovering && !game_state.has_picked_up_seeds) {
+		if(crate_red.is_hovering && !game_state.has_picked_up_seeds) {
 			// deselect others
-			crate_red.selected = true
+			crate_red.is_selected = true
 			game_state.has_picked_up_seeds = true
 			fmt.println("we picked up seeds")
 			if(game_state.number_of_seeds_picked_up == 0) {
@@ -374,9 +377,9 @@ Update :: proc (deltaTime:f32) {
 			game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
 		}
 		for a_plot in plots {
-			if(a_plot.hovering){
+			if(a_plot.is_hovering){
 				// deselect others
-				if(crate_red.selected){
+				if(crate_red.is_selected){
 					if(!a_plot.has_had_action){
 						fmt.println("we water or put down seeds on ", a_plot.name)
 						a_plot.has_had_action = true
@@ -397,8 +400,14 @@ Update :: proc (deltaTime:f32) {
 				return
 			}
 		}
+		if(bed.is_hovering){
+			fmt.println("You trying to go to bed")
+			if(game_state.number_of_seeds_planted < 6){
+				SetActiveDialogue(&early_bed_dialogue)
+			}
+		}
 	}
-	if(crate_red.selected){
+	if(crate_red.is_selected){
 		crate_red.colorFadeBloom.timerColorFade = crate_red.colorFadeBloom.timerColorFade - deltaTime
 		t := crate_red.colorFadeBloom.timerColorFade/ crate_red.colorFadeBloom.initialTime
 		crate_red.colorFadeBloom.colorCurrent = ColorLerp(crate_red.colorFadeBloom.colorTo, crate_red.colorFadeBloom.colorFrom, PingPong(t, 1))		
@@ -440,7 +449,7 @@ Draw :: proc () {
 		raylib.DrawTexture(grandma.texture, x, y, raylib.WHITE)
 	}
 	{	// Crate
-		if(crate_red.selected){
+		if(crate_red.is_selected){
 			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
 			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, crate_red.colorFadeBloom.colorCurrent)
 
@@ -451,7 +460,7 @@ Draw :: proc () {
 					raylib.DrawTexture(a_plot.bloomImageData.texture, x, y, ColorHalfTransparent)
 				}
 			}
-		}else if(crate_red.hovering) {
+		}else if(crate_red.is_hovering) {
 			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
 			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, ColorHalfTransparent)
 		}
