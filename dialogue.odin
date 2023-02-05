@@ -13,12 +13,20 @@ DialogueSegment :: struct {
 intro_dialogue: 		ChainedDialogue
 early_bed_dialogue: 		ChainedDialogue
 first_seeds_dialogue: 	ChainedDialogue
-wake_up_dialogue: 	ChainedDialogue
+wake_up_dialogue1: 	ChainedDialogue
+wake_up_dialogue2: 	ChainedDialogue
+wake_up_dialogue3: 	ChainedDialogue
 halfway_first_batch_seeds_dialogue: 	ChainedDialogue
 all_done_seeds_dialogue: ChainedDialogue
 no_seeds_dialogue: 		ChainedDialogue
 more_red_dialogue: 		ChainedDialogue
+green_black_mix_dialouge: ChainedDialogue
+why_close_dialogue1: ChainedDialogue
+why_close_dialogue2: ChainedDialogue
+why_close_dialogue3: ChainedDialogue
+why_close_dialogue4: ChainedDialogue
 has_won_dialogue:		ChainedDialogue
+one_of_each_dialogue: ChainedDialogue
 
 active_dialogue: 		^ChainedDialogue
 random_old_dialouge: RandomUniqueStrings
@@ -35,15 +43,25 @@ SetupAllDialogue :: proc() {
 		"Granny\nis getting\nold!", 
 		"Granny\nis getting\nold!",
 		"Granny\nis getting\nold!", 
-		"Granny\nis getting\nold!", 
+		"Granny\nis getting\nold!",
+		"Granny\ngot amnesia\nok!", 
 		"Granny\ngot that\nalzheimer's!",
+		"Granny\nmemory\nneed work!",
 		"Granny\nnot built\nFord Tough!",
 		"Granny\ntoo old\nfor this!", 
 		"Granny\nneeds her nap!",
+		"Granny\nneeds her nap!",
 		"Granny\nsoon head to\nthe glue shop!",
+		"Granny\nhalfway to\nthe morgue!",
+		"Granny\nsoon drop\ndead DEAD!",
+		"Granny\nswear she saw\nher granny!",
+		"Granny\nswear she saw\nher granny!",
+		"Granny\nflirting with\nthe ancestors!",
 		"Granny\nflirting with\nthe ancestors!",
 		"Granny\n*yawn*\nwhat was..?",
 		"Granny\nskin gettin\nleathery",
+		"Granny\n... ..\nzzZzzz",
+		"Granny\n... ..\nzzZzzz",
 		"Granny\n... ..\nzzZzzz",
 	}
 	Create_RandomUniqueStrings(&random_old_dialouge, random_old_dialouge_strings[:])
@@ -111,10 +129,28 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}
 	}
 	{
-		dialogue := &wake_up_dialogue
+		dialogue := &wake_up_dialogue1
 		dialogue.dialogueIndex = -1
 		dialogue.dialogueSegments[0] = DialogueSegment{text="Bout time you\nwoke up!", timerText=4}
 		dialogue.dialogueSegments[1] = DialogueSegment{text="Our ancestors\nweren't lazy", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="get moving!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dia
+	{
+		dialogue := &wake_up_dialogue2
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Well look who\nwoke up!", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="Quit yo\nlazy self", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="get moving!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dia
+	{
+		dialogue := &wake_up_dialogue3
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Get up\nsleepy head!", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="Whats the\nhold up?", timerText=3}
 		dialogue.dialogueSegments[2] = DialogueSegment{text="get moving!", timerText=3}
 		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
 		assert(ok)
@@ -125,11 +161,73 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueIndex = -1
 		dialogue.dialogueSegments[0] = DialogueSegment{text="No child!\nthats not it!", timerText=4}
 		dialogue.dialogueSegments[1] = DialogueSegment{text="our past\nhas a lot", timerText=3}
-		dialogue.dialogueSegments[2] = DialogueSegment{text="more red in it!", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="more blood in it!", timerText=3}
 		dialogue.dialogueSegments[3] = DialogueSegment{text="Now try again!", timerText=3}
 		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
 		assert(ok)
 		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &one_of_each_dialogue
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="No child!\nNo!", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="our past\nis mixedup", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="We are\nsome of\neverythang!", timerText=3}
+		dialogue.dialogueSegments[3] = DialogueSegment{text="Now try again!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &green_black_mix_dialouge
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Blasted child!\nNo!", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="blood is\nbetween", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="the people\nand their\nwealth!", timerText=3}
+		dialogue.dialogueSegments[3] = DialogueSegment{text="Now try again!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &why_close_dialogue1
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Why you so\nclose child?", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="society is\nnothing", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="without blood\npeople and\nwealth!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &why_close_dialogue2
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Back up\nnah!!", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="Did you\nforget", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="what color\nblood is?", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &why_close_dialogue3
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Get to it!", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="slacking off\nwont ever", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="get you\nthat green!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &why_close_dialogue4
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Zzzz\nzzz", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="people.. zz\nblack..", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="love...\n black people\n...", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[3] = DialogueSegment{text=old_granny_text, timerText=3}
 	}
 	{
 		dialogue := &has_won_dialogue

@@ -4,6 +4,7 @@ import "core:fmt"
 import "core:intrinsics"
 import "core:math"
 import "core:strings"
+import "core:math/rand"
 import raylib "vendor:raylib"
 
 
@@ -131,6 +132,7 @@ GameState :: struct {
 	is_sleeping:				bool,
 	is_showing_end_movie:			bool,
 	is_restarting: 			bool,
+	has_talked_to_grandma:	bool,
 	has_game_started: 			bool,
 	has_won:					bool,
 	has_not_learned_from_their_past: bool,
@@ -172,7 +174,7 @@ main :: proc () {
 
 	raylib.InitWindow(800, 600, "Altered Roots")
 	defer raylib.CloseWindow()
-	raylib.InitAudioDevice();      // Initialize audio device
+	raylib.InitAudioDevice()      // Initialize audio device
 	raylib.SetTargetFPS(60)
 
 	crates[0] = &crate_red
@@ -276,7 +278,7 @@ main :: proc () {
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
 		grandma.centerPosition = raylib.Vector2{cast(f32)(screen_width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
 		bed.centerPosition = raylib.Vector2{grandma.centerPosition.x, grandma.centerPosition.y + 100}
-		bias:= 0
+		bias := 0
 		for a_plot in plots {
 			a_plot.plotImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
 			a_plot.seededImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
@@ -284,7 +286,7 @@ main :: proc () {
 			a_plot.bloomImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
 			bias = bias + 100
 		}		
-		bias= 0
+		bias = 0
 		for a_crate in crates {
 			a_crate.outerImageData.centerPosition = raylib.Vector2{StartingCratePositionX + cast(f32)bias, StartingCratePositionY}
 			a_crate.innerImageData.centerPosition = raylib.Vector2{StartingCratePositionX + cast(f32)bias, StartingCratePositionY}
@@ -324,8 +326,8 @@ main :: proc () {
 		raylib.BeginDrawing()
 		defer raylib.EndDrawing()
 		raylib.ClearBackground(raylib.BLACK)
-		raylib.UpdateMusicStream(music_menu);   // Update music buffer with new stream data
-		raylib.UpdateMusicStream(music_background);   // Update music buffer with new stream data
+		raylib.UpdateMusicStream(music_menu)   // Update music buffer with new stream data
+		raylib.UpdateMusicStream(music_background)   // Update music buffer with new stream data
 
 		// Intentionally reassign width and height incase we allow resizes
 		screen_height = raylib.GetScreenHeight()
@@ -376,7 +378,12 @@ Update :: proc (deltaTime:f32) {
 		if(game_state.is_sleeping){
 			fmt.println("wake up")
 			game_state.is_sleeping = false
-			SetActiveDialogue(&wake_up_dialogue)
+			r := cast(int)(rand.uint64()%3)
+			switch r {
+				case 0: SetActiveDialogue(&wake_up_dialogue1)
+				case 1: SetActiveDialogue(&wake_up_dialogue2)
+				case 2: SetActiveDialogue(&wake_up_dialogue3)
+			}logue)
 			fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
 			// update plant states
 			for a_plot in plots {
@@ -405,16 +412,7 @@ Update :: proc (deltaTime:f32) {
 					return
 				}
 				if(game_state.has_not_learned_from_their_past) {
-					game_state.is_menu = false
-					game_state.is_sleeping = false
-					game_state.is_showing_end_movie = false
-					game_state.is_restarting = false
-					game_state.has_game_started = false
-					game_state.has_won = false
-					game_state.has_not_learned_from_their_past = false
-					game_state.has_picked_up_seeds_once = false
-					game_state.number_of_seeds_planted = 0
-					game_state.crate_in_use = nil
+					game_state = {}
 					for a_plot in plots {
 						a_plot.state = 0
 						a_plot.is_hovering = false
@@ -506,6 +504,17 @@ Update :: proc (deltaTime:f32) {
 			// Set equipment to player position after moving back
 			equipment.watercanImageData.centerPosition = character_player.centerPosition
 			equipment.seedBagImageData.centerPosition = character_player.centerPosition
+
+			if(!game_state.has_talked_to_grandma){
+				game_state.has_talked_to_grandma = true
+				r := cast(int)(rand.uint64()%4)
+				switch r {
+					case 0: SetActiveDialogue(&why_close_dialogue1)
+					case 1: SetActiveDialogue(&why_close_dialogue2)
+					case 2: SetActiveDialogue(&why_close_dialogue3)
+					case 3: SetActiveDialogue(&why_close_dialogue4)
+				}
+			}
 		}
 	}
 
@@ -606,7 +615,24 @@ Update :: proc (deltaTime:f32) {
 		}else /*if raylib.IsKeyDown(.P) */{
 			fmt.println("You need to try again!")
 			game_state.has_not_learned_from_their_past = true
-			SetActiveDialogue(&more_red_dialogue)
+			adder:= make(map[int]int)
+			defer delete(adder)
+			
+			for a_plot in plots {
+				adder[a_plot.seed_type] = adder[a_plot.seed_type] + 1
+			}
+			if(len(adder) != 3) {
+				fmt.println("You need one of each color!")
+				SetActiveDialogue(&one_of_each_dialogue)
+			}else{
+				if(adder[1] < 4){
+					fmt.println("You need more red!")
+					SetActiveDialogue(&more_red_dialogue)
+				}else{
+					fmt.println("You need red between black and green!")
+					SetActiveDialogue(&green_black_mix_dialouge)
+				}
+			}
 		}
 	}
 }
@@ -783,7 +809,7 @@ GUI_DrawSpeechBubble :: proc(imageData: ImageData, text: string) {
 
 GUI_DrawText :: proc (text:cstring, alignment:TextAlignment, posX:i32, posY:i32, fontSize :i32, fontColor: raylib.Color){
 	if alignment == .Left {
-		 raylib.DrawText(text, posX, posY, fontSize, fontColor)
+		raylib.DrawText(text, posX, posY, fontSize, fontColor)
 	} else if alignment == .Center {
 		scoreSizeLeft := raylib.MeasureText(text, fontSize)
 		raylib.DrawText(text, (posX - scoreSizeLeft/2), posY, fontSize, fontColor)
