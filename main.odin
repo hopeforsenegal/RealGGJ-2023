@@ -308,7 +308,7 @@ main :: proc () {
 			.RIGHT,
 			.ENTER,
 			.SPACE,
-			.E
+			.E,
 		}
 		// Setup various fades
 		fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
