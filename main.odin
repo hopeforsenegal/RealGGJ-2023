@@ -637,8 +637,13 @@ Update :: proc (deltaTime:f32) {
 							fmt.println("You need to probably swap!")
 							SetActiveDialogue(&swap_green_black_dialouge)
 						}else{
-							fmt.println("You need red between black and green!")
-							SetActiveDialogue(&green_black_mix_dialouge)
+							if(plot_5.seed_type == 2){
+								fmt.println("You need to stand tall swap!")
+								SetActiveDialogue(&stand_tall_dialouge)
+							}else{
+								fmt.println("You need red between black and green!")
+								SetActiveDialogue(&green_black_mix_dialouge)
+							}
 						}
 					}
 				}

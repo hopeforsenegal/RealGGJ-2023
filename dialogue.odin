@@ -22,6 +22,7 @@ no_seeds_dialogue: 		ChainedDialogue
 more_red_dialogue: 		ChainedDialogue
 green_black_mix_dialouge: 	ChainedDialogue
 swap_green_black_dialouge: 	ChainedDialogue
+stand_tall_dialouge:		ChainedDialogue
 red_ends_dialouge:			ChainedDialogue
 why_close_dialogue1: ChainedDialogue
 why_close_dialogue2: ChainedDialogue
@@ -196,6 +197,17 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueSegments[1] = DialogueSegment{text="You confusing\nthe people", timerText=3}
 		dialogue.dialogueSegments[2] = DialogueSegment{text="with their\nwealth!", timerText=3}
 		dialogue.dialogueSegments[3] = DialogueSegment{text="Now try again!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &stand_tall_dialouge
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Child!\nIts like\n I always say", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="the people\nneed to", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="stand taller\nthan that!", timerText=3}
+		dialogue.dialogueSegments[3] = DialogueSegment{text="Now again!\n Again!", timerText=3}
 		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
 		assert(ok)
 		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
