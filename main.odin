@@ -6,6 +6,7 @@ import "core:math"
 import "core:strings"
 import raylib "vendor:raylib"
 
+
 InputCooldownSeconds 	:: 0.4
 StandardDimensionsX 	:: 100
 StandardDimensionsY 	:: 100
@@ -79,15 +80,19 @@ Plot :: struct {
 	plantImageData: 	ImageData,
 	bloomImageData: 	ImageData,
 	colorFadeBloom:		ColorFade,
+
+	hovering:			bool,
+	selected:			bool,
 }
 
 Crate :: struct {
-  outerImageData: 	ImageData,
-  innerImageData: 	ImageData,
-  bloomImageData: 	ImageData,
-  colorFadeBloom:	ColorFade,
-  hovering:			bool,
-  selected:			bool,
+	outerImageData: ImageData,
+	innerImageData: ImageData,
+	bloomImageData: ImageData,
+	colorFadeBloom:	ColorFade,
+
+	hovering:		bool,
+	selected:		bool,
 }
 
 Ground :: struct {
@@ -96,7 +101,6 @@ Ground :: struct {
 
 ChatBubble :: struct{
   using imageData: 	ImageData,
-  dialogueIndex: 	i32,
 }
 
 ColorFade :: struct {
@@ -105,11 +109,6 @@ ColorFade :: struct {
 	colorFrom: 			raylib.Color,
 	colorTo: 			raylib.Color,
   	colorCurrent:		raylib.Color,
-}
-
-DialogueSegment :: struct {
-	text: 		string,
-	timerText: 	f32,
 }
 
 gui: GUI
@@ -124,8 +123,6 @@ screenFade: 		ColorFade
 screen_height: 		i32
 screen_width: 		i32
 timerInputCooldown:			f32
-
-dialogue1: [4]DialogueSegment
 
 main :: proc () {
 	assert(NumberOfCharacters("thiss", 'x') == 0)
@@ -199,6 +196,7 @@ main :: proc () {
 	defer raylib.UnloadTexture(crate_red.bloomImageData.texture)
 	defer raylib.UnloadTexture(grandma.texture)
 	defer raylib.UnloadTexture(chat_br.texture)
+	
 	{	
 		// Setup gui
 		gui.color = raylib.WHITE
@@ -210,6 +208,7 @@ main :: proc () {
 		plot_1.plotImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
 		plot_1.seededImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
 		plot_1.plantImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
+		plot_1.bloomImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
 		crate_red.outerImageData.centerPosition = raylib.Vector2{750,575}
 		crate_red.innerImageData.centerPosition = raylib.Vector2{750,575}
 		crate_red.bloomImageData.centerPosition = raylib.Vector2{750,575}
@@ -232,14 +231,10 @@ main :: proc () {
 		crate_red.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
 		plot_1.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
 		// Setup dialogue
-		chat_br.dialogueIndex = -1
-		dialogue1[0] = DialogueSegment{text="Um...", timerText=3}
-		dialogue1[1] = DialogueSegment{text="Hey child", timerText=3}
-		dialogue1[2] = DialogueSegment{text="You planting\nthose plants\nyet?", timerText=3}
-		dialogue1[3] = DialogueSegment{text="Granny\nis getting\nold!", timerText=3}
+		SetupIntroDialouge()
 	}
 
-	for !raylib.WindowShouldClose() {
+	for (!raylib.WindowShouldClose()) {
 		raylib.BeginDrawing()
 		defer raylib.EndDrawing()
 		raylib.ClearBackground(raylib.BLACK)
@@ -261,18 +256,14 @@ Update :: proc (deltaTime:f32) {
 		screenFade.colorCurrent = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
 	}else{
 		// Show first dialogue
-		if(chat_br.dialogueIndex < 0) {
-			chat_br.dialogueIndex = 0
-		}
+		PointToFirstDialogueIfReady(&intro_dialogue)
 	}
-	if(chat_br.dialogueIndex >= 0){
-		if HasHitTime(&dialogue1[chat_br.dialogueIndex].timerText, deltaTime) {
-			//fmt.println("dialogueIndex:", chat_br.dialogueIndex)
+	activeDialogue := ActiveDialogue()
+	if(activeDialogue.dialogueIndex >= 0){
+		if HasHitTime(GetDialogueTimer(activeDialogue), deltaTime) {
+			fmt.println("dialogueIndex:", activeDialogue.dialogueIndex)
 			// TODO: we should probably fix this at some point
-			chat_br.dialogueIndex = chat_br.dialogueIndex + 1
-			if(chat_br.dialogueIndex >= len(dialogue1)) { 
-				chat_br.dialogueIndex = -1
-			}
+			ProgressDialogueIfReady(activeDialogue)
 		}
 	}
 	if HasHitTime(&timerInputCooldown, deltaTime) {
@@ -316,8 +307,12 @@ Update :: proc (deltaTime:f32) {
 			character_player.centerPosition.y = (character_player.size.y / 2)
 		}
 		// Detect by objects of interest
-		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {
-			fmt.println("plant")
+		plot_1.hovering = false
+		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {			
+			if(character_player.centerPosition.x <= 100){
+				plot_1.hovering = true
+				fmt.println("plot 1")
+			}
 		}
 		crate_red.hovering = false
 		if character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(screen_height) - 100 {
@@ -327,10 +322,17 @@ Update :: proc (deltaTime:f32) {
 		}
 	}
 
-	if(crate_red.hovering && actions.interact){
+	if(actions.interact) {
 		actions.interact = false
-		crate_red.selected = true
-		// deselect others
+		if(crate_red.hovering) {
+			crate_red.selected = true
+			// deselect others
+		}
+		if(plot_1.hovering) {
+			plot_1.selected = true
+			fmt.println("we water or put down seeds")
+			// deselect others
+		}
 	}
 	if(crate_red.selected){
 		crate_red.colorFadeBloom.timerColorFade = crate_red.colorFadeBloom.timerColorFade - deltaTime
@@ -366,6 +368,9 @@ Draw :: proc () {
 		if(crate_red.selected){
 			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
 			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, crate_red.colorFadeBloom.colorCurrent)
+
+			x,y  = ToScreenOffsetPosition(plot_1.bloomImageData)
+			raylib.DrawTexture(plot_1.bloomImageData.texture, x, y, ColorHalfTransparent)
 		}else if(crate_red.hovering){
 			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
 			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, ColorHalfTransparent)
@@ -376,28 +381,17 @@ Draw :: proc () {
 		raylib.DrawTexture(crate_red.innerImageData.texture, x, y, raylib.RED)
 	}
 	{	// Chat bubble
-		if(chat_br.dialogueIndex >= 0){
-			if(dialogue1[chat_br.dialogueIndex].timerText > 0) {
+		activeDialogue := ActiveDialogue()
+		if(activeDialogue.dialogueIndex >= 0){
+			if(GetDialogueTimer(activeDialogue)^ > 0) {
   				local_scope_color(raylib.BLACK)
-				GUI_DrawSpeechBubble(chat_br, dialogue1[chat_br.dialogueIndex].text)
+				GUI_DrawSpeechBubble(chat_br, GetDialogueText(activeDialogue))
 			}
 		}
 	}
 	{	// Screen Fade
-		if(screenFade.timerColorFade > 0){
+		if(screenFade.timerColorFade > 0) {
 			raylib.DrawRectangle(0, 0, screen_width, screen_height, screenFade.colorCurrent)
-		}
-	}
-	{	// Debug
-		if(raylib.IsKeyDown(.SPACE)){
-  			local_scope_color(raylib.BLACK)
-			GUI_DrawSpeechBubble(chat_br, "test")
-
-			x,y  := ToScreenOffsetPosition(equipment.watercanImageData)
-			position:= raylib.Vector2{cast(f32)x, cast(f32)y}
-			texture_width := cast(f32)equipment.watercanImageData.texture.width * (character_player.lastDirectionRight?-1:1)
-			texture_height := cast(f32)equipment.watercanImageData.texture.height
-			raylib.DrawTextureRec(equipment.watercanImageData.texture, raylib.Rectangle{ 0,0, texture_width, texture_height }, position, raylib.WHITE)
 		}
 	}
 }
