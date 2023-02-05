@@ -111,6 +111,11 @@ ColorFade :: struct {
   	colorCurrent:		raylib.Color,
 }
 
+GameState :: struct {
+	has_game_started: 			bool,
+	has_pickedup_first_seeds:	bool,
+}
+
 gui: GUI
 ground: 			Ground
 character_player: 	CharacterPlayer
@@ -123,7 +128,7 @@ screenFade: 		ColorFade
 screen_height: 		i32
 screen_width: 		i32
 timerInputCooldown:			f32
-game_started: bool
+game_state:	GameState
 
 main :: proc () {
 	assert(NumberOfCharacters("thiss", 'x') == 0)
@@ -232,8 +237,7 @@ main :: proc () {
 		crate_red.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
 		plot_1.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
 		// Setup dialogue
-		SetupIntroDialouge()
-		SetupNoSeedsDialouge()
+		SetupAllDialogue()
 	}
 
 	for (!raylib.WindowShouldClose()) {
@@ -257,8 +261,8 @@ Update :: proc (deltaTime:f32) {
 		t := screenFade.timerColorFade/ screenFade.initialTime
 		screenFade.colorCurrent = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
 	}else{
-		if(!game_started){
-			game_started = true
+		if(!game_state.has_game_started){
+			game_state.has_game_started = true
 			// Show first dialogue
 			SetActiveDialogue(&intro_dialogue)
 		}
@@ -317,7 +321,7 @@ Update :: proc (deltaTime:f32) {
 		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {			
 			if(character_player.centerPosition.x <= 100){
 				plot_1.hovering = true
-				fmt.println("plot 1")
+				fmt.println("on plot 1")
 			}
 		}
 		crate_red.hovering = false
@@ -333,6 +337,11 @@ Update :: proc (deltaTime:f32) {
 		if(crate_red.hovering) {
 			// deselect others
 			crate_red.selected = true
+			fmt.println("we picked up seeds")
+			if(!game_state.has_pickedup_first_seeds){
+				game_state.has_pickedup_first_seeds = true;
+				SetActiveDialogue(&first_seeds_dialogue)
+			}
 		}
 		if(plot_1.hovering) {
 			// deselect others
