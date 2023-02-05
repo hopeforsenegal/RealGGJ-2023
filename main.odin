@@ -114,6 +114,7 @@ ColorFade :: struct {
 
 GameState :: struct {
 	has_game_started: 			bool,
+	has_picked_up_seeds:		bool,
 	number_of_seeds_picked_up:	int,
 	number_of_seeds_planted:	int,
 }
@@ -198,17 +199,11 @@ main :: proc () {
 		ResizeAndBindImageData(&a_plot.seededImageData, &plot_seeds_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&a_plot.plantImageData, &plot_plant_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&a_plot.bloomImageData, &selection_bloom_image, StandardDimensionsX, StandardDimensionsY)
-
-				fmt.println("1plot ", a_plot.name, " id ", a_plot.plotImageData.texture.id)
 	}
 	ResizeAndBindImageData(&crate_red.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
 	ResizeAndBindImageData(&crate_red.innerImageData, &crate_seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
 	ResizeAndBindImageData(&crate_red.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
 	ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
-
-				fmt.println("crate id ", crate_red.outerImageData.texture.id)
-				fmt.println("crate bloom id ", crate_red.bloomImageData.texture.id)
-	
 	{	
 		// Setup gui
 		gui.color = raylib.WHITE
@@ -224,9 +219,7 @@ main :: proc () {
 			a_plot.plantImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
 			a_plot.bloomImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
 			bias = bias + 100
-				fmt.println("2plot ", a_plot.name)
 		}
-				fmt.println("bias ", bias)
 		crate_red.outerImageData.centerPosition = raylib.Vector2{750,575}
 		crate_red.innerImageData.centerPosition = raylib.Vector2{750,575}
 		crate_red.bloomImageData.centerPosition = raylib.Vector2{750,575}
@@ -354,14 +347,15 @@ Update :: proc (deltaTime:f32) {
 
 	if(actions.interact) {
 		actions.interact = false
-		if(crate_red.hovering) {
+		if(crate_red.hovering && !game_state.has_picked_up_seeds) {
 			// deselect others
 			crate_red.selected = true
+			game_state.has_picked_up_seeds = true
 			fmt.println("we picked up seeds")
 			if(game_state.number_of_seeds_picked_up == 0) {
 				SetActiveDialogue(&first_seeds_dialogue)
 			} else if(game_state.number_of_seeds_picked_up == 3) {
-				SetActiveDialogue(&first_seeds_dialogue)
+				SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
 			} 
 			game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
 		}
@@ -372,13 +366,15 @@ Update :: proc (deltaTime:f32) {
 					fmt.println("we water or put down seeds on ", a_plot.name)
 					a_plot.state = a_plot.state + 1
 					game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
-					if(game_state.number_of_seeds_picked_up >= 6) {
+					game_state.has_picked_up_seeds = false
+					if(game_state.number_of_seeds_planted >= 6) {
 						SetActiveDialogue(&all_done_seeds_dialogue)
 					}
 				}else{
 					fmt.println("You aint got no seeds for ", a_plot.name)
 					SetActiveDialogue(&no_seeds_dialogue)
 				}
+				return
 			}
 		}
 	}

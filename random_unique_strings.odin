@@ -1,18 +1,22 @@
 package aroots
 
+import "core:fmt"
 import "core:math/rand"
 import "core:intrinsics"
-import "core:fmt"
 
 RandomUniqueStrings :: struct{
-	strings: map[string]bool,
+	strings: 		map[string]bool,
+	copy_strings: 	[]string,
 }
 
 Create_RandomUniqueStrings :: proc(randomUniqueStrings:^RandomUniqueStrings, strings: []string){
-	rand.shuffle(strings)
+    randomUniqueStrings.copy_strings = make([]string, len(strings)) 
+    copy(randomUniqueStrings.copy_strings, strings)
+    rand.shuffle(randomUniqueStrings.copy_strings)
 	{
 		randomUniqueStrings.strings = make(map[string]bool)
-		for string_to_add in strings {
+		for string_to_add in randomUniqueStrings.copy_strings {
+			fmt.println("string_to_add:", string_to_add)
 			randomUniqueStrings.strings[string_to_add] = false
 		}
 	}
@@ -20,13 +24,15 @@ Create_RandomUniqueStrings :: proc(randomUniqueStrings:^RandomUniqueStrings, str
 
 Destroy_RandomUniqueStrings :: proc(randomUniqueStrings:^RandomUniqueStrings) {
 	delete(randomUniqueStrings.strings)
+	delete(randomUniqueStrings.copy_strings)
 }
 
 GetString_RandomUniqueStrings :: proc(randomUniqueStrings:^RandomUniqueStrings) ->(string, bool) {
-	for key, value in randomUniqueStrings.strings {
-		if(!value){
-			randomUniqueStrings.strings[key] = true
-			return key, true
+	for str in randomUniqueStrings.copy_strings {
+		value, ok := randomUniqueStrings.strings[str]
+		if(ok && !value){
+			randomUniqueStrings.strings[str] = true
+			return str, true
 		}
 	}
 	return "", false
