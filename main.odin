@@ -129,6 +129,7 @@ ColorFade :: struct {
 GameState :: struct {
 	is_menu:				bool,
 	is_sleeping:				bool,
+	is_showing_movie:			bool,
 	has_game_started: 			bool,
 	has_picked_up_seeds:		bool,
 	has_won:					bool,
@@ -368,7 +369,9 @@ Update :: proc (deltaTime:f32) {
 			fmt.println("dialogueIndex:", activeDialogue.dialogueIndex)
 			// TODO: we should probably fix this at some point
 			ProgressDialogueIfReady(activeDialogue)
-			if(game_state.has_won){
+			if(game_state.has_won && activeDialogue.dialogueIndex > 20){
+				game_state.has_won = false
+				game_state.is_showing_movie = true
 				fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
 			}
 		}
@@ -523,7 +526,7 @@ Update :: proc (deltaTime:f32) {
 			break
 		}
 	}
-	if(hasWin){
+	if(hasWin /*|| raylib.IsKeyDown(.P)*/){
 		fmt.println("You deserve an explination")
 		fmt.println("plot_1.seed_type ", plot_1.seed_type,
 				 "&& plot_2.seed_type ", plot_2.seed_type,
@@ -538,12 +541,11 @@ Update :: proc (deltaTime:f32) {
 							   && plot_5.seed_type == 1 
 							   && plot_6.seed_type == 1)
 								
-		if(hasWinningCombination){
+		if(hasWinningCombination /*|| raylib.IsKeyDown(.P)*/){
 			fmt.println("You won won!")
 			game_state.has_won = true
 			SetActiveDialogue(&has_won_dialogue)
 		}
-		// if the right combination game over
 		// if wrong combination give a hint and then ask to go to sleep so we can reset
 		//if()
 	}
@@ -645,7 +647,8 @@ Draw :: proc () {
 			raylib.DrawRectangle(0, 0, screen_width, screen_height, fadeClearToBlack.colorCurrent)
 		}
 		if(fadeClearToBlack.timerColorFade < 0) {
-			if(game_state.has_won){
+			if(game_state.is_showing_movie){
+				raylib.DrawRectangle(0, 0, screen_width, screen_height, raylib.BLACK)
 				GUI_DrawText("Granny loves you...", TextAlignment.Center, screen_width/2, screen_height/2, 20, raylib.WHITE)
 			}
 		}
