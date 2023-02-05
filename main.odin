@@ -101,7 +101,6 @@ Crate :: struct {
 	name: string,
 
 	is_hovering:		bool,
-	is_selected:		bool,
 	seed_type:			int,
 }
 
@@ -134,6 +133,7 @@ GameState :: struct {
 	has_picked_up_seeds:		bool,
 	number_of_seeds_picked_up:	int,
 	number_of_seeds_planted:	int,
+	crate_in_use: 				^Crate,
 }
 
 ground: 			Ground
@@ -332,10 +332,12 @@ Update :: proc (deltaTime:f32) {
 	if !HasHitTime(&fadeBlackToClear.timerColorFade, deltaTime) {
 		t := fadeBlackToClear.timerColorFade/ fadeBlackToClear.initialTime
 		fadeBlackToClear.colorCurrent = ColorLerp(fadeBlackToClear.colorTo, fadeBlackToClear.colorFrom, t)
+		return
 	}
 	if !HasHitTime(&fadeClearToBlack.timerColorFade, deltaTime) {
 		t := fadeClearToBlack.timerColorFade/ fadeClearToBlack.initialTime
 		fadeClearToBlack.colorCurrent = ColorLerp(fadeClearToBlack.colorTo, fadeClearToBlack.colorFrom, t)
+		return
 	}
 
 	if(fadeBlackToClear.timerColorFade < 0) {
@@ -446,46 +448,39 @@ Update :: proc (deltaTime:f32) {
 	if(actions.interact) {
 		actions.interact = false
 		for a_crate in crates {	
-			if(a_crate.is_hovering && !game_state.has_picked_up_seeds) {				
-				crate_red.is_selected 	= false // deselect others
-				crate_black.is_selected = false 
-				crate_green.is_selected = false 
-
-				a_crate.is_selected = true
-				game_state.has_picked_up_seeds = true
-				fmt.println("we picked up seeds")
+			if(a_crate.is_hovering && game_state.crate_in_use != a_crate) {
+				game_state.crate_in_use = a_crate
+				fmt.println("we picked up seeds from ", a_crate.name)
 				if(game_state.number_of_seeds_picked_up == 0) {
 					SetActiveDialogue(&first_seeds_dialogue)
 				} 
 				game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
-			}		
+			}
 		}
 		for a_plot in plots {
 			if(a_plot.is_hovering){
 				fmt.println("plant state ", a_plot.state)
 				if(a_plot.state == 0){
-					for a_crate in crates {	
-						if(a_crate.is_selected){
-							if(!a_plot.has_had_action){
-								fmt.println("we water or put down seeds on ", a_plot.name)
-								a_plot.has_had_action = true
-								a_plot.state = a_plot.state + 1
-								a_plot.seed_type = a_crate.seed_type
-								game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
-								game_state.has_picked_up_seeds = false
-								if(game_state.number_of_seeds_planted == 3) {
-									SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
-								}else if(game_state.number_of_seeds_planted >= 6) {
-									fmt.println("Planted all the seeds of the day ", game_state.number_of_seeds_planted)
-									SetActiveDialogue(&all_done_seeds_dialogue)
-								}
+					if(game_state.crate_in_use != nil){
+						if(!a_plot.has_had_action){
+							fmt.println("we water or put down seeds on ", a_plot.name)
+							a_plot.has_had_action = true
+							a_plot.state = a_plot.state + 1
+							a_plot.seed_type = game_state.crate_in_use.seed_type
+							game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
+							game_state.has_picked_up_seeds = false
+							if(game_state.number_of_seeds_planted == 3) {
+								SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
+							}else if(game_state.number_of_seeds_planted >= 6) {
+								fmt.println("Planted all the seeds of the day ", game_state.number_of_seeds_planted)
+								SetActiveDialogue(&all_done_seeds_dialogue)
 							}
-						}else{
-							fmt.println("You aint got no seeds for ", a_plot.name)
-							SetActiveDialogue(&no_seeds_dialogue)
 						}
-						return
+					}else{
+						fmt.println("You aint got no seeds for ", a_plot.name)
+						SetActiveDialogue(&no_seeds_dialogue)
 					}
+					return
 				}else if(a_plot.state == 2){
 					if(!a_plot.has_had_action){
 						fmt.println("Collected plant of ", a_plot.seed_type, " on ", a_plot.name)
@@ -507,12 +502,10 @@ Update :: proc (deltaTime:f32) {
 		}
 	}
 
-	for a_crate in crates {	
-		if(a_crate.is_selected){
-			a_crate.colorFadeBloom.timerColorFade = a_crate.colorFadeBloom.timerColorFade - deltaTime
-			t := a_crate.colorFadeBloom.timerColorFade/ a_crate.colorFadeBloom.initialTime
-			a_crate.colorFadeBloom.colorCurrent = ColorLerp(a_crate.colorFadeBloom.colorTo, a_crate.colorFadeBloom.colorFrom, PingPong(t, 1))		
-		}
+	if (game_state.crate_in_use != nil) {
+		game_state.crate_in_use.colorFadeBloom.timerColorFade = game_state.crate_in_use.colorFadeBloom.timerColorFade - deltaTime
+		t := game_state.crate_in_use.colorFadeBloom.timerColorFade/ game_state.crate_in_use.colorFadeBloom.initialTime
+		game_state.crate_in_use.colorFadeBloom.colorCurrent = ColorLerp(game_state.crate_in_use.colorFadeBloom.colorTo, game_state.crate_in_use.colorFadeBloom.colorFrom, PingPong(t, 1))		
 	}
 	// Set equipment to player position
 	equipment.watercanImageData.centerPosition = character_player.centerPosition
@@ -587,7 +580,7 @@ Draw :: proc () {
 	}
 	{	// Crate
 		for a_crate in crates {	
-			if(a_crate.is_selected){
+			if(a_crate == game_state.crate_in_use){
 				x,y  := ToScreenOffsetPosition(a_crate.bloomImageData)
 				raylib.DrawTexture(a_crate.bloomImageData.texture, x, y, a_crate.colorFadeBloom.colorCurrent)
 
