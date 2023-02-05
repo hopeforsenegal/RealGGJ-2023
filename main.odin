@@ -23,11 +23,6 @@ TextAlignment :: enum {
 	Right,
 }
 
-GUI :: struct {
-	color: raylib.Color,
-	fontSize: i32,
-}
-
 Actions :: struct {
     left: bool,
     up: bool,
@@ -128,7 +123,6 @@ GameState :: struct {
 	number_of_seeds_planted:	int,
 }
 
-gui: GUI
 ground: 			Ground
 character_player: 	CharacterPlayer
 grandma: 			GrandMa
@@ -220,8 +214,6 @@ main :: proc () {
 	ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	{	
 		// Setup gui
-		gui.color = raylib.WHITE
-		gui.fontSize = 20
 		// Starting positions
 		ground.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2)), (cast(f32)(screen_height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
@@ -502,7 +494,6 @@ Draw :: proc () {
 		activeDialogue, hasDialogue := ActiveDialogue()
 		if(hasDialogue && activeDialogue.dialogueIndex >= 0){
 			if(GetDialogueTimer(activeDialogue)^ > 0) {
-  				local_scope_color(raylib.BLACK)
 				GUI_DrawSpeechBubble(chat_br, GetDialogueText(activeDialogue))
 			}
 		}
@@ -571,7 +562,7 @@ ColorLerp :: proc(from:raylib.Color, to:raylib.Color, t:f32) -> raylib.Color {
 }
 
 GUI_DrawSpeechBubble :: proc(imageData: ImageData, text: string) {
-	fontSize := gui.fontSize
+	fontSize :i32= 20
 	topLeftX, topLeftY  := ToScreenOffsetPosition(imageData)
 	centerX := topLeftX + cast(i32)(imageData.size.x/2)
 	centerY := topLeftY + cast(i32)(imageData.size.y/2)
@@ -585,7 +576,7 @@ GUI_DrawSpeechBubble :: proc(imageData: ImageData, text: string) {
 }
 
 GUI_DrawText :: proc (text:cstring, alignment:TextAlignment, posX:i32, posY:i32, fontSize :i32){
-	color := gui.color
+	color := raylib.BLACK
 	if alignment == .Left {
 		 raylib.DrawText(text, posX, posY, fontSize, color)
 	} else if alignment == .Center {
@@ -605,17 +596,6 @@ NumberOfCharacters :: proc(text:string, of:rune) -> int{
 		}
 	}
 	return num
-}
-
-restore_color :: proc(color: raylib.Color) {
-  	gui.color = color
-}
-
-@(deferred_out=restore_color)
-local_scope_color :: proc(color: raylib.Color) -> raylib.Color {
-	current_color := gui.color
-	gui.color = color
-	return current_color
 }
 
 HasAABBCollision :: proc(a: Rectangle, b: Rectangle) -> bool{
