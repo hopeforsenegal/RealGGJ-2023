@@ -331,11 +331,17 @@ Update :: proc (deltaTime:f32) {
 			character_player.centerPosition.y = (character_player.size.y / 2)
 		}
 		// Detect by objects of interest
-		plot_1.hovering = false
-		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {			
-			if(character_player.centerPosition.x <= 100){
-				plot_1.hovering = true
-				fmt.println("on plot 1")
+
+		for a_plot in plots {
+			a_plot.hovering = false
+		}
+		if character_player.centerPosition.x-(character_player.size.x/2) < 100 {		
+			for a_plot in plots {
+				// Use the watering can since its easier for collision detection
+				if(HasAABBCollision(a_plot.plotImageData, equipment.watercanImageData)){
+					a_plot.hovering = true
+					fmt.println("on plot ", a_plot.name)
+				}
 			}
 		}
 		crate_red.hovering = false
@@ -359,18 +365,20 @@ Update :: proc (deltaTime:f32) {
 			} 
 			game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
 		}
-		if(plot_1.hovering) {
-			// deselect others
-			if(crate_red.selected){
-				fmt.println("we water or put down seeds")
-				plot_1.state = plot_1.state + 1
-				game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
-				if(game_state.number_of_seeds_picked_up >= 6) {
-					SetActiveDialogue(&all_done_seeds_dialogue)
+		for a_plot in plots {
+			if(a_plot.hovering){
+				// deselect others
+				if(crate_red.selected){
+					fmt.println("we water or put down seeds on ", a_plot.name)
+					a_plot.state = a_plot.state + 1
+					game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
+					if(game_state.number_of_seeds_picked_up >= 6) {
+						SetActiveDialogue(&all_done_seeds_dialogue)
+					}
+				}else{
+					fmt.println("You aint got no seeds for ", a_plot.name)
+					SetActiveDialogue(&no_seeds_dialogue)
 				}
-			}else{
-				fmt.println("You aint got no seeds")
-				SetActiveDialogue(&no_seeds_dialogue)
 			}
 		}
 	}
@@ -391,7 +399,6 @@ Draw :: proc () {
 	}
 	{	// Plants
 		for a_plot in plots {
-			fmt.println("draw plot ", a_plot.name, " state ", a_plot.state, " texture:", a_plot.plotImageData.texture.id)
 			if(a_plot.state == 0) {
 				x,y  := ToScreenOffsetPosition(a_plot.plotImageData)
 				raylib.DrawTexture(a_plot.plotImageData.texture, x, y, raylib.WHITE)
@@ -417,9 +424,14 @@ Draw :: proc () {
 			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
 			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, crate_red.colorFadeBloom.colorCurrent)
 
-			x,y  = ToScreenOffsetPosition(plot_1.bloomImageData)
-			raylib.DrawTexture(plot_1.bloomImageData.texture, x, y, ColorHalfTransparent)
-		}else if(crate_red.hovering){
+			// Highlight all the plots since you can plant a seed
+			for a_plot in plots {
+				if(a_plot.state == 0) {
+					x,y  = ToScreenOffsetPosition(a_plot.bloomImageData)
+					raylib.DrawTexture(a_plot.bloomImageData.texture, x, y, ColorHalfTransparent)
+				}
+			}
+		}else if(crate_red.hovering) {
 			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
 			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, ColorHalfTransparent)
 		}
@@ -543,4 +555,14 @@ local_scope_color :: proc(color: raylib.Color) -> raylib.Color {
 	current_color := gui.color
 	gui.color = color
 	return current_color
+}
+
+HasAABBCollision :: proc(a: Rectangle, b: Rectangle) -> bool{
+	bX := b.centerPosition.x - (b.size.x / 2)
+	bY := b.centerPosition.y - (b.size.y / 2)
+	aX := a.centerPosition.x - (a.size.x / 2)
+	aY := a.centerPosition.y - (a.size.y / 2)
+	hasCollisionX := aX+a.size.x >= bX && bX+b.size.x >= aX
+	hasCollisionY := aY+a.size.y >= bY && bY+b.size.y >= aY
+	return hasCollisionX && hasCollisionY
 }
