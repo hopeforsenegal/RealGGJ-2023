@@ -7,7 +7,7 @@ import "core:strings"
 import raylib "vendor:raylib"
 
 
-InputCooldownSeconds 	:: 0.4
+InputCooldownSeconds 	:: 0.2
 StandardDimensionsX 	:: 100
 StandardDimensionsY 	:: 100
 
@@ -131,9 +131,8 @@ GameState :: struct {
 	is_sleeping:				bool,
 	is_showing_movie:			bool,
 	has_game_started: 			bool,
-	has_picked_up_seeds:		bool,
 	has_won:					bool,
-	number_of_seeds_picked_up:	int,
+	has_picked_up_seeds_once:	bool,
 	number_of_seeds_planted:	int,
 	crate_in_use: 				^Crate,
 }
@@ -458,10 +457,10 @@ Update :: proc (deltaTime:f32) {
 			if(a_crate.is_hovering && game_state.crate_in_use != a_crate) {
 				game_state.crate_in_use = a_crate
 				fmt.println("we picked up seeds from ", a_crate.name)
-				if(game_state.number_of_seeds_picked_up == 0) {
+				if(!game_state.has_picked_up_seeds_once) {
+					game_state.has_picked_up_seeds_once = true
 					SetActiveDialogue(&first_seeds_dialogue)
 				} 
-				game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
 			}
 		}
 		for a_plot in plots {
@@ -475,7 +474,6 @@ Update :: proc (deltaTime:f32) {
 							a_plot.state = a_plot.state + 1
 							a_plot.seed_type = game_state.crate_in_use.seed_type
 							game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
-							game_state.has_picked_up_seeds = false
 							if(game_state.number_of_seeds_planted == 3) {
 								SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
 							}else if(game_state.number_of_seeds_planted >= 6) {
