@@ -46,6 +46,7 @@ SetupAllDialogue :: proc() {
 		"Granny\nis getting\nold!", 
 		"Granny\nis getting\nold!",
 		"Granny\nis getting\nold!",
+		"Granny\nold OLD!",
 		"Granny\nwas old\n70 years ago!",
 		"Granny\nstarting to\nrot!",
 		"Granny\nskin starting\nto odor!",
