@@ -12,6 +12,7 @@ DialogueSegment :: struct {
 
 intro_dialogue: 		ChainedDialogue
 first_seeds_dialogue: 	ChainedDialogue
+halfway_first_batch_seeds_dialogue: 	ChainedDialogue
 no_seeds_dialogue: 		ChainedDialogue
 active_dialogue: 		^ChainedDialogue
 
@@ -44,6 +45,14 @@ SetupAllDialogue :: proc() {
 	}
 	{
 		dialogue := &first_seeds_dialogue
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="Thats right\nsugar plum", timerText=3}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="Go ahead and", timerText=2.5}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="plant those\nover there\nsomewhere", timerText=3}
+		dialogue.dialogueSegments[3] = DialogueSegment{text="Granny\nnot built\nFord Tough!", timerText=3}
+	}
+	{
+		dialogue := &halfway_first_batch_seeds_dialogue
 		dialogue.dialogueIndex = -1
 		dialogue.dialogueSegments[0] = DialogueSegment{text="Thats right\nsugar plum", timerText=3}
 		dialogue.dialogueSegments[1] = DialogueSegment{text="Go ahead and", timerText=2.5}

@@ -82,7 +82,7 @@ Plot :: struct {
 	colorFadeBloom:		ColorFade,
 
 	hovering:			bool,
-	selected:			bool,
+	state: 				int,
 }
 
 Crate :: struct {
@@ -113,7 +113,7 @@ ColorFade :: struct {
 
 GameState :: struct {
 	has_game_started: 			bool,
-	has_pickedup_first_seeds:	bool,
+	number_of_seeds_picked_up:	int,
 }
 
 gui: GUI
@@ -131,10 +131,7 @@ timerInputCooldown:			f32
 game_state:	GameState
 
 main :: proc () {
-	assert(NumberOfCharacters("thiss", 'x') == 0)
-	assert(NumberOfCharacters("thiss", 't') == 1)
-	assert(NumberOfCharacters("thiss", 's') == 2)
-	assert(NumberOfCharacters("thi\nss", '\n') == 1)
+	RunTests()
 
 	raylib.InitWindow(800, 600, "Altered Roots")
 	defer raylib.CloseWindow()
@@ -306,7 +303,7 @@ Update :: proc (deltaTime:f32) {
 		}
 		crate_red.hovering = false
 		if character_player.centerPosition.y+(character_player.size.y/2) > cast(f32)(screen_height) - 100 {
-			if(character_player.centerPosition.x >=700){
+			if(character_player.centerPosition.x >=700) {
 				crate_red.hovering = true
 			}			
 		}
@@ -318,16 +315,18 @@ Update :: proc (deltaTime:f32) {
 			// deselect others
 			crate_red.selected = true
 			fmt.println("we picked up seeds")
-			if(!game_state.has_pickedup_first_seeds){
-				game_state.has_pickedup_first_seeds = true;
+			if(game_state.number_of_seeds_picked_up == 0) {
+				SetActiveDialogue(&first_seeds_dialogue)
+			} else if(game_state.number_of_seeds_picked_up == 3) {
 				SetActiveDialogue(&first_seeds_dialogue)
 			}
+			game_state.number_of_seeds_picked_up = number_of_seeds_picked_up + 1
 		}
 		if(plot_1.hovering) {
 			// deselect others
 			if(crate_red.selected){
-				plot_1.selected = true
 				fmt.println("we water or put down seeds")
+				plot_1.state = plot_1.state + 1
 			}else{
 				fmt.println("You aint got no seeds")
 				SetActiveDialogue(&no_seeds_dialogue)
@@ -350,8 +349,13 @@ Draw :: proc () {
 		raylib.DrawTexture(ground.texture, x, y, raylib.WHITE)
 	}
 	{	// Plants
-		x,y  := ToScreenOffsetPosition(plot_1.plotImageData)
-		raylib.DrawTexture(plot_1.plotImageData.texture, x, y, raylib.WHITE)
+		if(plot_1.state == 0){
+			x,y  := ToScreenOffsetPosition(plot_1.plotImageData)
+			raylib.DrawTexture(plot_1.plotImageData.texture, x, y, raylib.WHITE)
+		}else {
+			x,y  := ToScreenOffsetPosition(plot_1.plotImageData)
+			raylib.DrawTexture(plot_1.seededImageData.texture, x, y, raylib.WHITE)
+		}
 	}
 	{	// Player
 		x,y := ToScreenOffsetPosition(character_player)
