@@ -11,7 +11,15 @@ DialogueSegment :: struct {
 }
 
 intro_dialogue: 	ChainedDialogue
+no_seeds_dialogue: 	ChainedDialogue
 active_dialogue: 	^ChainedDialogue
+
+SetActiveDialogue :: proc(chainedDialogue:^ChainedDialogue) {
+	if(chainedDialogue.dialogueIndex < 0) {
+		chainedDialogue.dialogueIndex = 0
+	}
+	active_dialogue = chainedDialogue
+}
 
 SetupIntroDialouge :: proc() {
 	intro_dialogue.dialogueIndex = -1
@@ -19,13 +27,14 @@ SetupIntroDialouge :: proc() {
 	intro_dialogue.dialogueSegments[1] = DialogueSegment{text="Hey child", timerText=3}
 	intro_dialogue.dialogueSegments[2] = DialogueSegment{text="You planting\nthose plants\nyet?", timerText=3}
 	intro_dialogue.dialogueSegments[3] = DialogueSegment{text="Granny\nis getting\nold!", timerText=3}
-	active_dialogue = &intro_dialogue
 }
 
-PointToFirstDialogueIfReady :: proc(chainedDialogue: ^ChainedDialogue) {
-	if(chainedDialogue.dialogueIndex < 0) {
-		chainedDialogue.dialogueIndex = 0
-	}
+SetupNoSeedsDialouge :: proc() {
+	no_seeds_dialogue.dialogueIndex = -1
+	no_seeds_dialogue.dialogueSegments[0] = DialogueSegment{text="Honey..", timerText=3}
+	no_seeds_dialogue.dialogueSegments[1] = DialogueSegment{text="You ain't", timerText=3}
+	no_seeds_dialogue.dialogueSegments[2] = DialogueSegment{text="Planting\nwithout seeds\nare you?", timerText=3}
+	no_seeds_dialogue.dialogueSegments[3] = DialogueSegment{text="Granny\nis getting\nold!", timerText=3}
 }
 
 ProgressDialogueIfReady :: proc(chainedDialogue: ^ChainedDialogue) {
@@ -45,6 +54,6 @@ GetDialogueText :: proc(chainedDialogue: ^ChainedDialogue) ->string{
 	return chainedDialogue.dialogueSegments[index].text
 }
 
-ActiveDialogue :: proc() -> ^ChainedDialogue{
-	return active_dialogue
+ActiveDialogue :: proc() -> (^ChainedDialogue, bool){
+	return active_dialogue, active_dialogue != nil
 }

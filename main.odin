@@ -123,6 +123,7 @@ screenFade: 		ColorFade
 screen_height: 		i32
 screen_width: 		i32
 timerInputCooldown:			f32
+game_started: bool
 
 main :: proc () {
 	assert(NumberOfCharacters("thiss", 'x') == 0)
@@ -232,6 +233,7 @@ main :: proc () {
 		plot_1.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
 		// Setup dialogue
 		SetupIntroDialouge()
+		SetupNoSeedsDialouge()
 	}
 
 	for (!raylib.WindowShouldClose()) {
@@ -249,17 +251,21 @@ main :: proc () {
 }
 
 Update :: proc (deltaTime:f32) {
-    actions := GetUserActions(character_player);
+    actions := GetUserActions(character_player)
 
 	if !HasHitTime(&screenFade.timerColorFade, deltaTime) {
 		t := screenFade.timerColorFade/ screenFade.initialTime
 		screenFade.colorCurrent = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
 	}else{
-		// Show first dialogue
-		PointToFirstDialogueIfReady(&intro_dialogue)
+		if(!game_started){
+			game_started = true
+			// Show first dialogue
+			SetActiveDialogue(&intro_dialogue)
+		}
 	}
-	activeDialogue := ActiveDialogue()
-	if(activeDialogue.dialogueIndex >= 0){
+
+	activeDialogue, hasDialogue := ActiveDialogue()
+	if(hasDialogue && activeDialogue.dialogueIndex >= 0){
 		if HasHitTime(GetDialogueTimer(activeDialogue), deltaTime) {
 			fmt.println("dialogueIndex:", activeDialogue.dialogueIndex)
 			// TODO: we should probably fix this at some point
@@ -325,13 +331,18 @@ Update :: proc (deltaTime:f32) {
 	if(actions.interact) {
 		actions.interact = false
 		if(crate_red.hovering) {
-			crate_red.selected = true
 			// deselect others
+			crate_red.selected = true
 		}
 		if(plot_1.hovering) {
-			plot_1.selected = true
-			fmt.println("we water or put down seeds")
 			// deselect others
+			if(crate_red.selected){
+				plot_1.selected = true
+				fmt.println("we water or put down seeds")
+			}else{
+				fmt.println("You aint got no seeds")
+				SetActiveDialogue(&no_seeds_dialogue)
+			}
 		}
 	}
 	if(crate_red.selected){
@@ -381,8 +392,8 @@ Draw :: proc () {
 		raylib.DrawTexture(crate_red.innerImageData.texture, x, y, raylib.RED)
 	}
 	{	// Chat bubble
-		activeDialogue := ActiveDialogue()
-		if(activeDialogue.dialogueIndex >= 0){
+		activeDialogue, hasDialogue := ActiveDialogue()
+		if(hasDialogue && activeDialogue.dialogueIndex >= 0){
 			if(GetDialogueTimer(activeDialogue)^ > 0) {
   				local_scope_color(raylib.BLACK)
 				GUI_DrawSpeechBubble(chat_br, GetDialogueText(activeDialogue))
