@@ -277,7 +277,7 @@ main :: proc () {
 		ground.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2)), (cast(f32)(screen_height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
 		grandma.centerPosition = raylib.Vector2{cast(f32)(screen_width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
-		bed.centerPosition = raylib.Vector2{grandma.centerPosition.x, grandma.centerPosition.y + 100}
+		bed.centerPosition = raylib.Vector2{grandma.centerPosition.x, grandma.centerPosition.y + 200}
 		bias := 0
 		for a_plot in plots {
 			a_plot.plotImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
