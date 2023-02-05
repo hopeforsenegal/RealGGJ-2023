@@ -130,8 +130,10 @@ GameState :: struct {
 	is_menu:				bool,
 	is_sleeping:				bool,
 	is_showing_movie:			bool,
+	is_restarting: 			bool,
 	has_game_started: 			bool,
 	has_won:					bool,
+	has_not_learned_from_their_past: bool,
 	has_picked_up_seeds_once:	bool,
 	number_of_seeds_planted:	int,
 	crate_in_use: 				^Crate,
@@ -341,7 +343,7 @@ Update :: proc (deltaTime:f32) {
 		return
 	}
 
-	if(fadeBlackToClear.timerColorFade < 0) {
+	if(!game_state.is_restarting && fadeBlackToClear.timerColorFade < 0) {
 		if(!game_state.has_game_started){
 			game_state.has_game_started = true
 			// Show first dialogue
@@ -360,6 +362,10 @@ Update :: proc (deltaTime:f32) {
 				a_plot.has_had_action = false
 			}
 		}
+		if(game_state.is_restarting){
+			game_state.is_restarting = false
+			fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
+		}
 	}
 
 	activeDialogue, hasDialogue := ActiveDialogue()
@@ -368,10 +374,19 @@ Update :: proc (deltaTime:f32) {
 			fmt.println("dialogueIndex:", activeDialogue.dialogueIndex)
 			// TODO: we should probably fix this at some point
 			ProgressDialogueIfReady(activeDialogue)
-			if(game_state.has_won && activeDialogue.dialogueIndex > 20){
-				game_state.has_won = false
-				game_state.is_showing_movie = true
-				fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
+			if(activeDialogue.dialogueIndex > 20){
+				if(game_state.has_won) {
+					game_state.has_won = false
+					game_state.is_showing_movie = true
+					fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
+				}
+				if(game_state.has_not_learned_from_their_past) {
+					game_state.has_not_learned_from_their_past = false
+					game_state = {}
+					SetupAllDialogue()
+					game_state.is_restarting = true
+					fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
+				}
 			}
 		}
 	}
@@ -543,9 +558,11 @@ Update :: proc (deltaTime:f32) {
 			fmt.println("You won won!")
 			game_state.has_won = true
 			SetActiveDialogue(&has_won_dialogue)
+		}else /*if raylib.IsKeyDown(.P) */{
+			fmt.println("You need to try again!")
+			game_state.has_not_learned_from_their_past = true
+			SetActiveDialogue(&more_red_dialogue)
 		}
-		// if wrong combination give a hint and then ask to go to sleep so we can reset
-		//if()
 	}
 }
 
