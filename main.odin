@@ -143,65 +143,45 @@ main :: proc () {
 	screen_height = raylib.GetScreenHeight()
 	screen_width = raylib.GetScreenWidth()
 
-	ground = Ground{}
-	character_player = CharacterPlayer{}
-	equipment = Equipment{}
-	grandma = GrandMa{}
-	plot_1 = Plot{}
-	crate_red = Crate{}
-	{	// Load images
-		ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
-		defer raylib.UnloadImage(ground_image)		
-		character_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/character.png")
-		defer raylib.UnloadImage(character_image)	
-		equipment_watering_can_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/equipment_watering_can.png")
-		defer raylib.UnloadImage(equipment_watering_can_image)	
-		equipment_seed_bag_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/equipment_seed_bag.png")
-		defer raylib.UnloadImage(equipment_seed_bag_image)	
-		grandma_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/grandma.png")
-		defer raylib.UnloadImage(grandma_image)
-		plot_plot_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_plot.png")
-		defer raylib.UnloadImage(plot_plot_image)
-		plot_seeds_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_seeds.png")
-		defer raylib.UnloadImage(plot_seeds_image)
-		plot_plant_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_plant.png")
-		defer raylib.UnloadImage(plot_plant_image)
-		crate_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/crate.png")
-		defer raylib.UnloadImage(crate_image)
-		crate_seed_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/crate_seed.png")
-		defer raylib.UnloadImage(crate_seed_image)
-		selection_bloom_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/selection_bloom.png")
-		defer raylib.UnloadImage(selection_bloom_image)
-		chat_bottom_right_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_right.png")
-		defer raylib.UnloadImage(chat_bottom_right_image)
+	// Load images
+	ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
+	defer raylib.UnloadImage(ground_image)		
+	character_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/character.png")
+	defer raylib.UnloadImage(character_image)	
+	equipment_watering_can_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/equipment_watering_can.png")
+	defer raylib.UnloadImage(equipment_watering_can_image)	
+	equipment_seed_bag_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/equipment_seed_bag.png")
+	defer raylib.UnloadImage(equipment_seed_bag_image)	
+	grandma_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/grandma.png")
+	defer raylib.UnloadImage(grandma_image)
+	plot_plot_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_plot.png")
+	defer raylib.UnloadImage(plot_plot_image)
+	plot_seeds_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_seeds.png")
+	defer raylib.UnloadImage(plot_seeds_image)
+	plot_plant_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot_plant.png")
+	defer raylib.UnloadImage(plot_plant_image)
+	crate_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/crate.png")
+	defer raylib.UnloadImage(crate_image)
+	crate_seed_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/crate_seed.png")
+	defer raylib.UnloadImage(crate_seed_image)
+	selection_bloom_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/selection_bloom.png")
+	defer raylib.UnloadImage(selection_bloom_image)
+	chat_bottom_right_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_right.png")
+	defer raylib.UnloadImage(chat_bottom_right_image)
 
-		ResizeAndBindImageData(&ground, &ground_image, screen_width, screen_height)
-		ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&equipment.watercanImageData, &equipment_watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
-		ResizeAndBindImageData(&equipment.seedBagImageData, &equipment_seed_bag_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
-		ResizeAndBindImageData(&plot_1.plotImageData, &plot_plot_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&plot_1.seededImageData, &plot_seeds_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&plot_1.plantImageData, &plot_plant_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&plot_1.bloomImageData, &selection_bloom_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&crate_red.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
-		ResizeAndBindImageData(&crate_red.innerImageData, &crate_seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
-		ResizeAndBindImageData(&crate_red.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
-		ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
-	}
-	defer raylib.UnloadTexture(ground.texture)
-	defer raylib.UnloadTexture(character_player.texture)
-	defer raylib.UnloadTexture(equipment.watercanImageData.texture)
-	defer raylib.UnloadTexture(equipment.seedBagImageData.texture)
-	defer raylib.UnloadTexture(plot_1.plotImageData.texture)
-	defer raylib.UnloadTexture(plot_1.seededImageData.texture)
-	defer raylib.UnloadTexture(plot_1.plantImageData.texture)
-	defer raylib.UnloadTexture(plot_1.bloomImageData.texture)
-	defer raylib.UnloadTexture(crate_red.outerImageData.texture)
-	defer raylib.UnloadTexture(crate_red.innerImageData.texture)
-	defer raylib.UnloadTexture(crate_red.bloomImageData.texture)
-	defer raylib.UnloadTexture(grandma.texture)
-	defer raylib.UnloadTexture(chat_br.texture)
+	ResizeAndBindImageData(&ground, &ground_image, screen_width, screen_height)
+	ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
+	ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
+	ResizeAndBindImageData(&equipment.watercanImageData, &equipment_watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
+	ResizeAndBindImageData(&equipment.seedBagImageData, &equipment_seed_bag_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
+	ResizeAndBindImageData(&plot_1.plotImageData, &plot_plot_image, StandardDimensionsX, StandardDimensionsY)
+	ResizeAndBindImageData(&plot_1.seededImageData, &plot_seeds_image, StandardDimensionsX, StandardDimensionsY)
+	ResizeAndBindImageData(&plot_1.plantImageData, &plot_plant_image, StandardDimensionsX, StandardDimensionsY)
+	ResizeAndBindImageData(&plot_1.bloomImageData, &selection_bloom_image, StandardDimensionsX, StandardDimensionsY)
+	ResizeAndBindImageData(&crate_red.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
+	ResizeAndBindImageData(&crate_red.innerImageData, &crate_seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
+	ResizeAndBindImageData(&crate_red.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
+	ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	
 	{	
 		// Setup gui
@@ -435,6 +415,12 @@ HasHitTime :: proc(timeRemaining:^f32, deltaTime:f32) ->bool {
 	return timeRemaining^ <= 0
 }
 
+
+cleanup_texture :: proc(imageData:^ImageData, image:^raylib.Image, dimensionX:i32, dimensionY:i32) {
+	// This whole ordeal isn't really necessary since we are likely quiting the application
+  	raylib.UnloadTexture(imageData.texture)
+}
+@(deferred_in=cleanup_texture)
 ResizeAndBindImageData :: proc(imageData:^ImageData, image:^raylib.Image, dimensionX:i32, dimensionY:i32) {
 	raylib.ImageResize(image, dimensionX, dimensionY)
 	texture := raylib.LoadTextureFromImage(image^)
@@ -505,14 +491,6 @@ NumberOfCharacters :: proc(text:string, of:rune) -> int{
 	return num
 }
 
-/* The following two functions make dealing with gui color easier like the following
-	{
-		currentColor := gui.color
-		defer gui.color = currentColor
-		gui.color = BLACK
-		...
-	}
-*/
 restore_color :: proc(color: raylib.Color) {
   	gui.color = color
 }
