@@ -320,7 +320,7 @@ Update :: proc (deltaTime:f32) {
 			} else if(game_state.number_of_seeds_picked_up == 3) {
 				SetActiveDialogue(&first_seeds_dialogue)
 			}
-			game_state.number_of_seeds_picked_up = number_of_seeds_picked_up + 1
+			game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
 		}
 		if(plot_1.hovering) {
 			// deselect others
