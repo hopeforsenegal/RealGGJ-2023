@@ -86,6 +86,7 @@ Plot :: struct {
 	is_hovering:			bool,
 
 	state: 				int,
+	seed_type:			int,
 	has_had_action: 	bool,
 }
 
@@ -297,6 +298,7 @@ Update :: proc (deltaTime:f32) {
 			// update plant states
 			for a_plot in plots {
 				a_plot.state = a_plot.state + 1
+				a_plot.has_had_action = false
 			}
 		}
 	}
@@ -392,26 +394,36 @@ Update :: proc (deltaTime:f32) {
 		}
 		for a_plot in plots {
 			if(a_plot.is_hovering){
-				// deselect others
-				if(crate_red.is_selected){
+				// TODO: search for and deselect others
+				fmt.println("plant state ", a_plot.state)
+				if(a_plot.state == 0){
+					if(crate_red.is_selected){
+						if(!a_plot.has_had_action){
+							fmt.println("we water or put down seeds on ", a_plot.name)
+							a_plot.has_had_action = true
+							a_plot.state = a_plot.state + 1
+							a_plot.seed_type = 1
+							game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
+							game_state.has_picked_up_seeds = false
+							if(game_state.number_of_seeds_planted == 3) {
+								SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
+							}else if(game_state.number_of_seeds_planted >= 6) {
+								fmt.println("Planted all the seeds of the day ", game_state.number_of_seeds_planted)
+								SetActiveDialogue(&all_done_seeds_dialogue)
+							}
+						}
+					}else{
+						fmt.println("You aint got no seeds for ", a_plot.name)
+						SetActiveDialogue(&no_seeds_dialogue)
+					}
+					return
+				}else if(a_plot.state == 2){
 					if(!a_plot.has_had_action){
-						fmt.println("we water or put down seeds on ", a_plot.name)
+						fmt.println("Collected plant of ", a_plot.seed_type, " on ", a_plot.name)
 						a_plot.has_had_action = true
 						a_plot.state = a_plot.state + 1
-						game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
-						game_state.has_picked_up_seeds = false
-						if(game_state.number_of_seeds_planted == 3) {
-							SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
-						}else if(game_state.number_of_seeds_planted >= 6) {
-							fmt.println("Planted all the seeds of the day ", game_state.number_of_seeds_planted)
-							SetActiveDialogue(&all_done_seeds_dialogue)
-						}
 					}
-				}else{
-					fmt.println("You aint got no seeds for ", a_plot.name)
-					SetActiveDialogue(&no_seeds_dialogue)
 				}
-				return
 			}
 		}
 		if(bed.is_hovering){
@@ -433,6 +445,18 @@ Update :: proc (deltaTime:f32) {
 	// Set equipment to player position
 	equipment.watercanImageData.centerPosition = character_player.centerPosition
 	equipment.seedBagImageData.centerPosition = character_player.centerPosition
+
+	// Win round
+	hasWin := true
+	for a_plot in plots {
+		if(a_plot.state != 3){
+			hasWin = false
+			break
+		}
+	}
+	if(hasWin){
+		fmt.println("You deserve an explination")
+	}
 }
 
 Draw :: proc () {
@@ -442,16 +466,26 @@ Draw :: proc () {
 	}
 	{	// Plants
 		for a_plot in plots {
-			imageData : ImageData
-			if(a_plot.state == 0) {
+			imageData: ImageData
+			color	:= raylib.WHITE
+			if(a_plot.state == 3){
+				continue	// Was collected so don't render
+			} else if(a_plot.state == 0) {
 				imageData = a_plot.plotImageData
 			} else if a_plot.state == 1 {
 				imageData = a_plot.seededImageData
-			} else {
+			} else if (a_plot.state == 2) {
 				imageData = a_plot.plantImageData
+				if(a_plot.seed_type == 1){
+					color = raylib.RED
+				}else if(a_plot.seed_type == 2) { 
+					color = raylib.BLACK
+				}else if(a_plot.seed_type == 3) {
+					color = raylib.GREEN
+				}
 			}
 			x,y  := ToScreenOffsetPosition(imageData)
-			raylib.DrawTexture(imageData.texture, x, y, raylib.WHITE)
+			raylib.DrawTexture(imageData.texture, x, y, color)
 		}
 	}
 	{	// Bed
