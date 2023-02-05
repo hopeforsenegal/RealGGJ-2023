@@ -131,6 +131,7 @@ GameState :: struct {
 	is_sleeping:				bool,
 	has_game_started: 			bool,
 	has_picked_up_seeds:		bool,
+	has_won:					bool,
 	number_of_seeds_picked_up:	int,
 	number_of_seeds_planted:	int,
 	crate_in_use: 				^Crate,
@@ -367,6 +368,9 @@ Update :: proc (deltaTime:f32) {
 			fmt.println("dialogueIndex:", activeDialogue.dialogueIndex)
 			// TODO: we should probably fix this at some point
 			ProgressDialogueIfReady(activeDialogue)
+			if(game_state.has_won){
+				fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
+			}
 		}
 	}
 
@@ -521,6 +525,24 @@ Update :: proc (deltaTime:f32) {
 	}
 	if(hasWin){
 		fmt.println("You deserve an explination")
+		fmt.println("plot_1.seed_type ", plot_1.seed_type,
+				 "&& plot_2.seed_type ", plot_2.seed_type,
+				 "&& plot_3.seed_type ", plot_3.seed_type,
+				 "&& plot_4.seed_type ", plot_4.seed_type,
+				 "&& plot_5.seed_type ", plot_5.seed_type,
+				 "&& plot_6.seed_type ", plot_6.seed_type)
+		hasWinningCombination := (plot_1.seed_type == 1 
+							   && plot_2.seed_type == 3 
+							   && plot_3.seed_type == 1 
+							   && plot_4.seed_type == 2 
+							   && plot_5.seed_type == 1 
+							   && plot_6.seed_type == 1)
+								
+		if(hasWinningCombination){
+			fmt.println("You won won!")
+			game_state.has_won = true
+			SetActiveDialogue(&has_won_dialogue)
+		}
 		// if the right combination game over
 		// if wrong combination give a hint and then ask to go to sleep so we can reset
 		//if()
@@ -622,6 +644,11 @@ Draw :: proc () {
 		if(fadeClearToBlack.timerColorFade > 0) {
 			raylib.DrawRectangle(0, 0, screen_width, screen_height, fadeClearToBlack.colorCurrent)
 		}
+		if(fadeClearToBlack.timerColorFade < 0) {
+			if(game_state.has_won){
+				GUI_DrawText("Granny loves you...", TextAlignment.Center, screen_width/2, screen_height/2, 20, raylib.WHITE)
+			}
+		}
 	}
 }
 
@@ -679,7 +706,6 @@ ColorLerp :: proc(from:raylib.Color, to:raylib.Color, t:f32) -> raylib.Color {
 }
 
 GUI_DrawSpeechBubble :: proc(imageData: ImageData, text: string) {
-	fontSize :i32= 20
 	topLeftX, topLeftY  := ToScreenOffsetPosition(imageData)
 	centerX := topLeftX + cast(i32)(imageData.size.x/2)
 	centerY := topLeftY + cast(i32)(imageData.size.y/2)
@@ -689,19 +715,18 @@ GUI_DrawSpeechBubble :: proc(imageData: ImageData, text: string) {
 	defer delete(newText)
 
 	raylib.DrawTexture(imageData.texture, topLeftX, topLeftY, raylib.WHITE)
-	GUI_DrawText(newText, TextAlignment.Center, centerX, centerY - yBias, fontSize)
+	GUI_DrawText(newText, TextAlignment.Center, centerX, centerY - yBias, 20, raylib.BLACK)
 }
 
-GUI_DrawText :: proc (text:cstring, alignment:TextAlignment, posX:i32, posY:i32, fontSize :i32){
-	color := raylib.BLACK
+GUI_DrawText :: proc (text:cstring, alignment:TextAlignment, posX:i32, posY:i32, fontSize :i32, fontColor: raylib.Color){
 	if alignment == .Left {
-		 raylib.DrawText(text, posX, posY, fontSize, color)
+		 raylib.DrawText(text, posX, posY, fontSize, fontColor)
 	} else if alignment == .Center {
 		scoreSizeLeft := raylib.MeasureText(text, fontSize)
-		raylib.DrawText(text, (posX - scoreSizeLeft/2), posY, fontSize, color)
+		raylib.DrawText(text, (posX - scoreSizeLeft/2), posY, fontSize, fontColor)
 	} else if alignment == .Right {
 		scoreSizeLeft := raylib.MeasureText(text, fontSize)
-		raylib.DrawText(text, (posX - scoreSizeLeft), posY, fontSize, color)
+		raylib.DrawText(text, (posX - scoreSizeLeft), posY, fontSize, fontColor)
 	}
 }
 
