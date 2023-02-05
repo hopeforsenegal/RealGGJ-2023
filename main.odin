@@ -46,6 +46,7 @@ InputScheme :: struct {
 	rightButton2:	raylib.KeyboardKey,
 	interactButton:		raylib.KeyboardKey,
 	interactButton2:	raylib.KeyboardKey,
+	interactButton3:	raylib.KeyboardKey,
 }
 
 ImageData :: struct{
@@ -307,6 +308,7 @@ main :: proc () {
 			.RIGHT,
 			.ENTER,
 			.SPACE,
+			.E
 		}
 		// Setup various fades
 		fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
@@ -762,7 +764,7 @@ GetUserActions :: proc(using input: InputScheme) ->Actions {
 				up = raylib.IsKeyDown(upButton)|| raylib.IsKeyDown(upButton2),
 				down = raylib.IsKeyDown(downButton)|| raylib.IsKeyDown(downButton2),
 				right = raylib.IsKeyDown(rightButton)|| raylib.IsKeyDown(rightButton2),
-				interact = raylib.IsKeyDown(interactButton)|| raylib.IsKeyDown(interactButton2),
+				interact = raylib.IsKeyDown(interactButton)|| raylib.IsKeyDown(interactButton2) || raylib.IsKeyDown(interactButton3),
 			}
 }
 
