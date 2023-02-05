@@ -129,7 +129,7 @@ ColorFade :: struct {
 GameState :: struct {
 	is_menu:				bool,
 	is_sleeping:				bool,
-	is_showing_movie:			bool,
+	is_showing_end_movie:			bool,
 	is_restarting: 			bool,
 	has_game_started: 			bool,
 	has_won:					bool,
@@ -361,6 +361,10 @@ Update :: proc (deltaTime:f32) {
 		return
 	}
 
+	if(game_state.is_showing_end_movie){
+		return
+	}
+
 	if(!game_state.is_restarting && fadeBlackToClear.timerColorFade < 0) {
 		if(!game_state.has_game_started){
 			game_state.has_game_started = true
@@ -396,14 +400,14 @@ Update :: proc (deltaTime:f32) {
 			if(activeDialogue.dialogueIndex > 20){
 				if(game_state.has_won) {
 					game_state.has_won = false
-					game_state.is_showing_movie = true
+					game_state.is_showing_end_movie = true
 					fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
 					return
 				}
 				if(game_state.has_not_learned_from_their_past) {
 					game_state.is_menu = false
 					game_state.is_sleeping = false
-					game_state.is_showing_movie = false
+					game_state.is_showing_end_movie = false
 					game_state.is_restarting = false
 					game_state.has_game_started = false
 					game_state.has_won = false
@@ -703,7 +707,7 @@ Draw :: proc () {
 			raylib.DrawRectangle(0, 0, screen_width, screen_height, fadeClearToBlack.colorCurrent)
 		}
 		if(fadeClearToBlack.timerColorFade < 0) {
-			if(game_state.is_showing_movie){
+			if(game_state.is_showing_end_movie){
 				raylib.DrawRectangle(0, 0, screen_width, screen_height, raylib.BLACK)
 				GUI_DrawText("Granny loves you...", TextAlignment.Center, screen_width/2, screen_height/2, 20, raylib.WHITE)
 			}
