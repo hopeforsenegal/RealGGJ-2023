@@ -11,6 +11,9 @@ InputCooldownSeconds 	:: 0.4
 StandardDimensionsX 	:: 100
 StandardDimensionsY 	:: 100
 
+StartingCratePositionX :: 550
+StartingCratePositionY :: 575
+
 DurationScreenFade			:: 3
 DurationSelectedCrateFade 	:: 1
 
@@ -95,9 +98,11 @@ Crate :: struct {
 	innerImageData: ImageData,
 	bloomImageData: ImageData,
 	colorFadeBloom:	ColorFade,
+	name: string,
 
 	is_hovering:		bool,
 	is_selected:		bool,
+	seed_type:			int,
 }
 
 Ground :: struct {
@@ -134,9 +139,12 @@ GameState :: struct {
 ground: 			Ground
 character_player: 	CharacterPlayer
 grandma: 			GrandMa
-bed: 			Bed
-equipment: 		Equipment
-crate_red: 			Crate
+bed: 		Bed
+equipment: 	Equipment
+crate_red: 		Crate
+crate_black: 	Crate
+crate_green: 	Crate
+crates: [3]^Crate
 plot_1: 				Plot
 plot_2: 				Plot
 plot_3: 				Plot
@@ -160,6 +168,17 @@ main :: proc () {
 	defer raylib.CloseWindow()
 	raylib.SetTargetFPS(60)
 
+	crates[0] = &crate_red
+	crates[1] = &crate_black
+	crates[2] = &crate_green
+
+	crates[0].name = "c0"
+	crates[1].name = "c1"
+	crates[2].name = "c2"
+	crates[0].seed_type = 1
+	crates[1].seed_type = 2
+	crates[2].seed_type = 3
+
 	plots[0] = &plot_1
 	plots[1] = &plot_2
 	plots[2] = &plot_3
@@ -167,12 +186,12 @@ main :: proc () {
 	plots[4] = &plot_5
 	plots[5] = &plot_6
 
-	plots[0].name = "0"
-	plots[1].name = "1"
-	plots[2].name = "2"
-	plots[3].name = "3"
-	plots[4].name = "4"
-	plots[5].name = "5"
+	plots[0].name = "p0"
+	plots[1].name = "p1"
+	plots[2].name = "p2"
+	plots[3].name = "p3"
+	plots[4].name = "p4"
+	plots[5].name = "p5"
 
 	screen_height = raylib.GetScreenHeight()
 	screen_width = raylib.GetScreenWidth()
@@ -225,9 +244,11 @@ main :: proc () {
 		ResizeAndBindImageData(&a_plot.plantImageData, &plot_plant_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&a_plot.bloomImageData, &selection_bloom_image, StandardDimensionsX, StandardDimensionsY)
 	}
-	ResizeAndBindImageData(&crate_red.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
-	ResizeAndBindImageData(&crate_red.innerImageData, &crate_seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
-	ResizeAndBindImageData(&crate_red.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
+	for a_crate in crates {
+		ResizeAndBindImageData(&a_crate.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
+		ResizeAndBindImageData(&a_crate.innerImageData, &crate_seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
+		ResizeAndBindImageData(&a_crate.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
+	}
 	ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	ResizeAndBindImageData(&menu.foreImageData, &menu_fore_image, 1000, 1000)
 	ResizeAndBindImageData(&menu.backImageData, &menu_back_image, 1000, 1000)
@@ -247,10 +268,15 @@ main :: proc () {
 			a_plot.plantImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
 			a_plot.bloomImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
 			bias = bias + 100
+		}		
+		bias= 0
+		for a_crate in crates {
+			a_crate.outerImageData.centerPosition = raylib.Vector2{StartingCratePositionX + cast(f32)bias, StartingCratePositionY}
+			a_crate.innerImageData.centerPosition = raylib.Vector2{StartingCratePositionX + cast(f32)bias, StartingCratePositionY}
+			a_crate.bloomImageData.centerPosition = raylib.Vector2{StartingCratePositionX + cast(f32)bias, StartingCratePositionY}
+			bias = bias + 100
 		}
-		crate_red.outerImageData.centerPosition = raylib.Vector2{750,575}
-		crate_red.innerImageData.centerPosition = raylib.Vector2{750,575}
-		crate_red.bloomImageData.centerPosition = raylib.Vector2{750,575}
+		
 		chat_br.centerPosition = raylib.Vector2{grandma.centerPosition.x - 85, grandma.centerPosition.y-80}
 		// Setup input
 		character_player.input = InputScheme{
@@ -267,7 +293,9 @@ main :: proc () {
 		}
 		// Setup various fades
 		fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
-		crate_red.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
+		for a_crate in crates {
+			a_crate.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
+		}
 		for a_plot in plots {
 			a_plot.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
 		}
@@ -292,7 +320,7 @@ main :: proc () {
 Update :: proc (deltaTime:f32) {
 	if(game_state.is_menu){
 		fmt.println("in menu")
-		if(raylib.GetKeyPressed() > .APOSTROPHE || raylib.IsMouseButtonDown(.LEFT)){
+		if(raylib.GetKeyPressed() > .APOSTROPHE || raylib.IsKeyDown(.SPACE) || raylib.IsMouseButtonDown(.LEFT)) {
 			fmt.println("exit menu ", raylib.GetKeyPressed())
 			game_state.is_menu = false
 		}
@@ -376,21 +404,28 @@ Update :: proc (deltaTime:f32) {
 		if boundsRight || boundsLeft || boundsBottom || boundsTop {
 			character_player.centerPosition = previousPosition
 		}
+
 		// Detect by objects of interest
+		// NOTE: We use the watering can since its easier for collision detection
 		for a_plot in plots {
 			a_plot.is_hovering = false
 		}	
-		for a_plot in plots {
-			// Use the watering can since its easier for collision detection
+		for a_plot in plots {			
 			if(HasAABBCollision(a_plot.plotImageData, equipment.watercanImageData)){
 				a_plot.is_hovering = true
 				fmt.println("on plot ", a_plot.name)
 				break
 			}
 		}
-		crate_red.is_hovering = false
-		if HasAABBCollision(crate_red.outerImageData, equipment.watercanImageData) {
-			crate_red.is_hovering = true
+		for a_crate in crates {
+			a_crate.is_hovering = false
+		}	
+		for a_crate in crates {			
+			if(HasAABBCollision(a_crate.outerImageData, equipment.watercanImageData)){
+				a_crate.is_hovering = true
+				fmt.println("on crate ", a_crate.name)
+				break
+			}
 		}
 		bed.is_hovering = false
 		if HasAABBCollision(bed, equipment.watercanImageData) {
@@ -410,41 +445,47 @@ Update :: proc (deltaTime:f32) {
 
 	if(actions.interact) {
 		actions.interact = false
-		if(crate_red.is_hovering && !game_state.has_picked_up_seeds) {
-			// deselect others
-			crate_red.is_selected = true
-			game_state.has_picked_up_seeds = true
-			fmt.println("we picked up seeds")
-			if(game_state.number_of_seeds_picked_up == 0) {
-				SetActiveDialogue(&first_seeds_dialogue)
-			} 
-			game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
+		for a_crate in crates {	
+			if(a_crate.is_hovering && !game_state.has_picked_up_seeds) {				
+				crate_red.is_selected 	= false // deselect others
+				crate_black.is_selected = false 
+				crate_green.is_selected = false 
+
+				a_crate.is_selected = true
+				game_state.has_picked_up_seeds = true
+				fmt.println("we picked up seeds")
+				if(game_state.number_of_seeds_picked_up == 0) {
+					SetActiveDialogue(&first_seeds_dialogue)
+				} 
+				game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
+			}		
 		}
 		for a_plot in plots {
 			if(a_plot.is_hovering){
-				// TODO: search for and deselect others
 				fmt.println("plant state ", a_plot.state)
 				if(a_plot.state == 0){
-					if(crate_red.is_selected){
-						if(!a_plot.has_had_action){
-							fmt.println("we water or put down seeds on ", a_plot.name)
-							a_plot.has_had_action = true
-							a_plot.state = a_plot.state + 1
-							a_plot.seed_type = 1
-							game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
-							game_state.has_picked_up_seeds = false
-							if(game_state.number_of_seeds_planted == 3) {
-								SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
-							}else if(game_state.number_of_seeds_planted >= 6) {
-								fmt.println("Planted all the seeds of the day ", game_state.number_of_seeds_planted)
-								SetActiveDialogue(&all_done_seeds_dialogue)
+					for a_crate in crates {	
+						if(a_crate.is_selected){
+							if(!a_plot.has_had_action){
+								fmt.println("we water or put down seeds on ", a_plot.name)
+								a_plot.has_had_action = true
+								a_plot.state = a_plot.state + 1
+								a_plot.seed_type = a_crate.seed_type
+								game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
+								game_state.has_picked_up_seeds = false
+								if(game_state.number_of_seeds_planted == 3) {
+									SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
+								}else if(game_state.number_of_seeds_planted >= 6) {
+									fmt.println("Planted all the seeds of the day ", game_state.number_of_seeds_planted)
+									SetActiveDialogue(&all_done_seeds_dialogue)
+								}
 							}
+						}else{
+							fmt.println("You aint got no seeds for ", a_plot.name)
+							SetActiveDialogue(&no_seeds_dialogue)
 						}
-					}else{
-						fmt.println("You aint got no seeds for ", a_plot.name)
-						SetActiveDialogue(&no_seeds_dialogue)
+						return
 					}
-					return
 				}else if(a_plot.state == 2){
 					if(!a_plot.has_had_action){
 						fmt.println("Collected plant of ", a_plot.seed_type, " on ", a_plot.name)
@@ -465,10 +506,13 @@ Update :: proc (deltaTime:f32) {
 			}
 		}
 	}
-	if(crate_red.is_selected){
-		crate_red.colorFadeBloom.timerColorFade = crate_red.colorFadeBloom.timerColorFade - deltaTime
-		t := crate_red.colorFadeBloom.timerColorFade/ crate_red.colorFadeBloom.initialTime
-		crate_red.colorFadeBloom.colorCurrent = ColorLerp(crate_red.colorFadeBloom.colorTo, crate_red.colorFadeBloom.colorFrom, PingPong(t, 1))		
+
+	for a_crate in crates {	
+		if(a_crate.is_selected){
+			a_crate.colorFadeBloom.timerColorFade = a_crate.colorFadeBloom.timerColorFade - deltaTime
+			t := a_crate.colorFadeBloom.timerColorFade/ a_crate.colorFadeBloom.initialTime
+			a_crate.colorFadeBloom.colorCurrent = ColorLerp(a_crate.colorFadeBloom.colorTo, a_crate.colorFadeBloom.colorFrom, PingPong(t, 1))		
+		}
 	}
 	// Set equipment to player position
 	equipment.watercanImageData.centerPosition = character_player.centerPosition
@@ -519,7 +563,7 @@ Draw :: proc () {
 				}else if(a_plot.seed_type == 2) { 
 					color = raylib.BLACK
 				}else if(a_plot.seed_type == 3) {
-					color = raylib.GREEN
+					color = raylib.DARKGREEN
 				}
 			}
 			x,y  := ToScreenOffsetPosition(imageData)
@@ -542,25 +586,33 @@ Draw :: proc () {
 		raylib.DrawTexture(grandma.texture, x, y, raylib.WHITE)
 	}
 	{	// Crate
-		if(crate_red.is_selected){
-			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
-			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, crate_red.colorFadeBloom.colorCurrent)
+		for a_crate in crates {	
+			if(a_crate.is_selected){
+				x,y  := ToScreenOffsetPosition(a_crate.bloomImageData)
+				raylib.DrawTexture(a_crate.bloomImageData.texture, x, y, a_crate.colorFadeBloom.colorCurrent)
 
-			// Highlight all the plots since you can plant a seed
-			for a_plot in plots {
-				if(a_plot.state == 0) {
-					x,y  = ToScreenOffsetPosition(a_plot.bloomImageData)
-					raylib.DrawTexture(a_plot.bloomImageData.texture, x, y, ColorHalfTransparent)
+				// Highlight all the plots since you can plant a seed
+				for a_plot in plots {
+					if(a_plot.state == 0) {
+						x,y  = ToScreenOffsetPosition(a_plot.bloomImageData)
+						raylib.DrawTexture(a_plot.bloomImageData.texture, x, y, ColorHalfTransparent)
+					}
 				}
+			}else if(a_crate.is_hovering) {
+				x,y  := ToScreenOffsetPosition(a_crate.bloomImageData)
+				raylib.DrawTexture(a_crate.bloomImageData.texture, x, y, ColorHalfTransparent)
 			}
-		}else if(crate_red.is_hovering) {
-			x,y  := ToScreenOffsetPosition(crate_red.bloomImageData)
-			raylib.DrawTexture(crate_red.bloomImageData.texture, x, y, ColorHalfTransparent)
+			x,y  := ToScreenOffsetPosition(a_crate.outerImageData)
+			raylib.DrawTexture(a_crate.outerImageData.texture, x, y, raylib.WHITE)
+			x,y  = ToScreenOffsetPosition(a_crate.innerImageData)
+			if(a_crate.seed_type == 1){
+				raylib.DrawTexture(a_crate.innerImageData.texture, x, y, raylib.RED)
+			}else if(a_crate.seed_type == 2){
+				raylib.DrawTexture(a_crate.innerImageData.texture, x, y, raylib.BLACK)
+			} else if(a_crate.seed_type == 3){
+				raylib.DrawTexture(a_crate.innerImageData.texture, x, y, raylib.DARKGREEN)
+			}
 		}
-		x,y  := ToScreenOffsetPosition(crate_red.outerImageData)
-		raylib.DrawTexture(crate_red.outerImageData.texture, x, y, raylib.WHITE)
-		x,y  = ToScreenOffsetPosition(crate_red.innerImageData)
-		raylib.DrawTexture(crate_red.innerImageData.texture, x, y, raylib.RED)
 	}
 	{	// Chat bubble
 		activeDialogue, hasDialogue := ActiveDialogue()
