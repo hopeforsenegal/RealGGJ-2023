@@ -83,7 +83,9 @@ Plot :: struct {
 	name: string,
 
 	hovering:			bool,
+
 	state: 				int,
+	has_had_action: 	bool,
 }
 
 Crate :: struct {
@@ -354,8 +356,6 @@ Update :: proc (deltaTime:f32) {
 			fmt.println("we picked up seeds")
 			if(game_state.number_of_seeds_picked_up == 0) {
 				SetActiveDialogue(&first_seeds_dialogue)
-			} else if(game_state.number_of_seeds_picked_up == 3) {
-				SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
 			} 
 			game_state.number_of_seeds_picked_up = game_state.number_of_seeds_picked_up + 1
 		}
@@ -363,12 +363,18 @@ Update :: proc (deltaTime:f32) {
 			if(a_plot.hovering){
 				// deselect others
 				if(crate_red.selected){
-					fmt.println("we water or put down seeds on ", a_plot.name)
-					a_plot.state = a_plot.state + 1
-					game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
-					game_state.has_picked_up_seeds = false
-					if(game_state.number_of_seeds_planted >= 6) {
-						SetActiveDialogue(&all_done_seeds_dialogue)
+					if(!a_plot.has_had_action){
+						fmt.println("we water or put down seeds on ", a_plot.name)
+						a_plot.has_had_action = true
+						a_plot.state = a_plot.state + 1
+						game_state.number_of_seeds_planted = game_state.number_of_seeds_planted + 1
+						game_state.has_picked_up_seeds = false
+						if(game_state.number_of_seeds_planted == 3) {
+							SetActiveDialogue(&halfway_first_batch_seeds_dialogue)
+						}else if(game_state.number_of_seeds_planted >= 6) {
+							fmt.println("Planted all the seeds of the day ", game_state.number_of_seeds_planted)
+							SetActiveDialogue(&all_done_seeds_dialogue)
+						}
 					}
 				}else{
 					fmt.println("You aint got no seeds for ", a_plot.name)

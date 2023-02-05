@@ -16,7 +16,6 @@ Create_RandomUniqueStrings :: proc(randomUniqueStrings:^RandomUniqueStrings, str
 	{
 		randomUniqueStrings.strings = make(map[string]bool)
 		for string_to_add in randomUniqueStrings.copy_strings {
-			fmt.println("string_to_add:", string_to_add)
 			randomUniqueStrings.strings[string_to_add] = false
 		}
 	}
