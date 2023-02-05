@@ -383,6 +383,7 @@ Update :: proc (deltaTime:f32) {
 		if(game_state.is_restarting){
 			game_state.is_restarting = false
 			fadeBlackToClear = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
+			fmt.println("should be restarted")
 		}
 	}
 
@@ -397,6 +398,7 @@ Update :: proc (deltaTime:f32) {
 					game_state.has_won = false
 					game_state.is_showing_movie = true
 					fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
+					return
 				}
 				if(game_state.has_not_learned_from_their_past) {
 					game_state.is_menu = false
@@ -409,10 +411,20 @@ Update :: proc (deltaTime:f32) {
 					game_state.has_picked_up_seeds_once = false
 					game_state.number_of_seeds_planted = 0
 					game_state.crate_in_use = nil
+					for a_plot in plots {
+						a_plot.state = 0
+						a_plot.is_hovering = false
+						a_plot.has_had_action = false
+					}
+					for a_crate in crates {
+						a_crate.is_hovering = false
+					}
 
 					SetupAllDialogue()
+					SetActiveDialogue(nil)
 					game_state.is_restarting = true
 					fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
+					return
 				}
 			}
 		}

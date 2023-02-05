@@ -23,11 +23,8 @@ has_won_dialogue:		ChainedDialogue
 active_dialogue: 		^ChainedDialogue
 random_old_dialouge: RandomUniqueStrings
 
-SetActiveDialogue :: proc(chainedDialogue:^ChainedDialogue, forceReset:bool = false) {
-	if(forceReset) { 
-		chainedDialogue.dialogueIndex = -1
-	}
-	if(chainedDialogue.dialogueIndex < 0) {
+SetActiveDialogue :: proc(chainedDialogue:^ChainedDialogue) {
+	if(chainedDialogue != nil && chainedDialogue.dialogueIndex < 0) {
 		chainedDialogue.dialogueIndex = 0
 	}
 	active_dialogue = chainedDialogue
