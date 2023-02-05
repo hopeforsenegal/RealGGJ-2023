@@ -165,6 +165,7 @@ timerInputCooldown:			f32
 game_state:	GameState
 music_menu: 		raylib.Music
 music_background: 	raylib.Music
+sound_shuffle: 	raylib.Sound
 
 main :: proc () {
 	RunTests()
@@ -209,6 +210,8 @@ main :: proc () {
 	defer raylib.UnloadMusicStream(music_menu)
 	music_background = raylib.LoadMusicStream("/Users/kvasall/Documents/Repos/Altered Roots/resources/music_background.ogg")
 	defer raylib.UnloadMusicStream(music_background)
+	sound_shuffle = raylib.LoadSound("/Users/kvasall/Documents/Repos/Altered Roots/resources/Foliage03.wav")
+	defer raylib.UnloadSound(sound_shuffle)
 
 	// Load images
 	ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
@@ -396,8 +399,17 @@ Update :: proc (deltaTime:f32) {
 					fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
 				}
 				if(game_state.has_not_learned_from_their_past) {
+					game_state.is_menu = false
+					game_state.is_sleeping = false
+					game_state.is_showing_movie = false
+					game_state.is_restarting = false
+					game_state.has_game_started = false
+					game_state.has_won = false
 					game_state.has_not_learned_from_their_past = false
-					game_state = {}
+					game_state.has_picked_up_seeds_once = false
+					game_state.number_of_seeds_planted = 0
+					game_state.crate_in_use = nil
+
 					SetupAllDialogue()
 					game_state.is_restarting = true
 					fadeClearToBlack = MakeColorFade(DurationScreenFade, ColorTransparent, raylib.BLACK)
@@ -500,6 +512,7 @@ Update :: proc (deltaTime:f32) {
 					if(game_state.crate_in_use != nil){
 						if(!a_plot.has_had_action){
 							fmt.println("we water or put down seeds on ", a_plot.name)
+							raylib.PlaySound(sound_shuffle)
 							a_plot.has_had_action = true
 							a_plot.state = a_plot.state + 1
 							a_plot.seed_type = game_state.crate_in_use.seed_type
@@ -519,6 +532,7 @@ Update :: proc (deltaTime:f32) {
 				}else if(a_plot.state == 2){
 					if(!a_plot.has_had_action){
 						fmt.println("Collected plant of ", a_plot.seed_type, " on ", a_plot.name)
+						raylib.PlaySound(sound_shuffle)
 						a_plot.has_had_action = true
 						a_plot.state = a_plot.state + 1
 					}
