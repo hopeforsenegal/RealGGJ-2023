@@ -163,12 +163,15 @@ screen_height: 		i32
 screen_width: 		i32
 timerInputCooldown:			f32
 game_state:	GameState
+music_menu: 		raylib.Music
+music_background: 	raylib.Music
 
 main :: proc () {
 	RunTests()
 
 	raylib.InitWindow(800, 600, "Altered Roots")
 	defer raylib.CloseWindow()
+	raylib.InitAudioDevice();      // Initialize audio device
 	raylib.SetTargetFPS(60)
 
 	crates[0] = &crate_red
@@ -200,6 +203,12 @@ main :: proc () {
 	screen_width = raylib.GetScreenWidth()
 
 	game_state.is_menu = true
+
+	// Load audio
+	music_menu = raylib.LoadMusicStream("/Users/kvasall/Documents/Repos/Altered Roots/resources/music_menu.ogg")
+	defer raylib.UnloadMusicStream(music_menu)
+	music_background = raylib.LoadMusicStream("/Users/kvasall/Documents/Repos/Altered Roots/resources/music_background.ogg")
+	defer raylib.UnloadMusicStream(music_background)
 
 	// Load images
 	ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
@@ -304,12 +313,16 @@ main :: proc () {
 		}
 		// Setup dialogue
 		SetupAllDialogue()
+		// Music
+		raylib.PlayMusicStream(music_menu)
 	}
 
 	for (!raylib.WindowShouldClose()) {
 		raylib.BeginDrawing()
 		defer raylib.EndDrawing()
 		raylib.ClearBackground(raylib.BLACK)
+		raylib.UpdateMusicStream(music_menu);   // Update music buffer with new stream data
+		raylib.UpdateMusicStream(music_background);   // Update music buffer with new stream data
 
 		// Intentionally reassign width and height incase we allow resizes
 		screen_height = raylib.GetScreenHeight()
@@ -326,6 +339,8 @@ Update :: proc (deltaTime:f32) {
 		if(raylib.GetKeyPressed() > .APOSTROPHE || raylib.IsKeyDown(.SPACE) || raylib.IsMouseButtonDown(.LEFT)) {
 			fmt.println("exit menu ", raylib.GetKeyPressed())
 			game_state.is_menu = false
+			raylib.StopMusicStream(music_menu)
+			raylib.PlayMusicStream(music_background)
 		}
 		return
 	}
