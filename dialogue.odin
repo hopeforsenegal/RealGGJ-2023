@@ -21,6 +21,7 @@ all_done_seeds_dialogue: ChainedDialogue
 no_seeds_dialogue: 		ChainedDialogue
 more_red_dialogue: 		ChainedDialogue
 green_black_mix_dialouge: ChainedDialogue
+red_ends_dialouge:			ChainedDialogue
 why_close_dialogue1: ChainedDialogue
 why_close_dialogue2: ChainedDialogue
 why_close_dialogue3: ChainedDialogue
@@ -44,6 +45,10 @@ SetupAllDialogue :: proc() {
 		"Granny\nis getting\nold!",
 		"Granny\nis getting\nold!", 
 		"Granny\nis getting\nold!",
+		"Granny\nis getting\nold!",
+		"Granny\nwas old\n70 years ago!",
+		"Granny\nstarting to\nrot!",
+		"Granny\nskin starting\nto odor!",
 		"Granny\ngot amnesia\nok!", 
 		"Granny\ngot that\nalzheimer's!",
 		"Granny\nmemory\nneed work!",
@@ -166,6 +171,17 @@ SetupAllDialogue :: proc() {
 		dialogue.dialogueSegments[0] = DialogueSegment{text="No child!\nthats not it!", timerText=4}
 		dialogue.dialogueSegments[1] = DialogueSegment{text="our past\nhas a lot", timerText=3}
 		dialogue.dialogueSegments[2] = DialogueSegment{text="more blood in it!", timerText=3}
+		dialogue.dialogueSegments[3] = DialogueSegment{text="Now try again!", timerText=3}
+		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
+		assert(ok)
+		dialogue.dialogueSegments[4] = DialogueSegment{text=old_granny_text, timerText=3}
+	}
+	{
+		dialogue := &red_ends_dialouge
+		dialogue.dialogueIndex = -1
+		dialogue.dialogueSegments[0] = DialogueSegment{text="No child!\nBut that feel\nclose!", timerText=4}
+		dialogue.dialogueSegments[1] = DialogueSegment{text="Blood permeates\nthe outer\nlimbs", timerText=3}
+		dialogue.dialogueSegments[2] = DialogueSegment{text="not just\nthe gut!", timerText=3}
 		dialogue.dialogueSegments[3] = DialogueSegment{text="Now try again!", timerText=3}
 		old_granny_text, ok := GetString_RandomUniqueStrings(&random_old_dialouge)
 		assert(ok)

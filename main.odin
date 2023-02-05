@@ -629,8 +629,13 @@ Update :: proc (deltaTime:f32) {
 					fmt.println("You need more red!")
 					SetActiveDialogue(&more_red_dialogue)
 				}else{
-					fmt.println("You need red between black and green!")
-					SetActiveDialogue(&green_black_mix_dialouge)
+					if(plot_1.seed_type != 1 || plot_6.seed_type != 1){
+						fmt.println("You need red at the ends!")
+						SetActiveDialogue(&red_ends_dialouge)
+					}else{
+						fmt.println("You need red between black and green!")
+						SetActiveDialogue(&green_black_mix_dialouge)
+					}
 				}
 			}
 		}
