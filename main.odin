@@ -80,6 +80,7 @@ Plot :: struct {
 	plantImageData: 	ImageData,
 	bloomImageData: 	ImageData,
 	colorFadeBloom:		ColorFade,
+	name: string,
 
 	hovering:			bool,
 	state: 				int,
@@ -124,6 +125,12 @@ grandma: 			GrandMa
 equipment: 		Equipment
 crate_red: 			Crate
 plot_1: 				Plot
+plot_2: 				Plot
+plot_3: 				Plot
+plot_4: 				Plot
+plot_5: 				Plot
+plot_6: 				Plot
+plots: [6]^Plot
 chat_br: 			ChatBubble
 screenFade: 		ColorFade
 screen_height: 		i32
@@ -137,6 +144,20 @@ main :: proc () {
 	raylib.InitWindow(800, 600, "Altered Roots")
 	defer raylib.CloseWindow()
 	raylib.SetTargetFPS(60)
+
+	plots[0] = &plot_1
+	plots[1] = &plot_2
+	plots[2] = &plot_3
+	plots[3] = &plot_4
+	plots[4] = &plot_5
+	plots[5] = &plot_6
+
+	plots[0].name = "0"
+	plots[1].name = "1"
+	plots[2].name = "2"
+	plots[3].name = "3"
+	plots[4].name = "4"
+	plots[5].name = "5"
 
 	screen_height = raylib.GetScreenHeight()
 	screen_width = raylib.GetScreenWidth()
@@ -172,14 +193,21 @@ main :: proc () {
 	ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
 	ResizeAndBindImageData(&equipment.watercanImageData, &equipment_watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
 	ResizeAndBindImageData(&equipment.seedBagImageData, &equipment_seed_bag_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
-	ResizeAndBindImageData(&plot_1.plotImageData, &plot_plot_image, StandardDimensionsX, StandardDimensionsY)
-	ResizeAndBindImageData(&plot_1.seededImageData, &plot_seeds_image, StandardDimensionsX, StandardDimensionsY)
-	ResizeAndBindImageData(&plot_1.plantImageData, &plot_plant_image, StandardDimensionsX, StandardDimensionsY)
-	ResizeAndBindImageData(&plot_1.bloomImageData, &selection_bloom_image, StandardDimensionsX, StandardDimensionsY)
+	for a_plot in plots {
+		ResizeAndBindImageData(&a_plot.plotImageData, &plot_plot_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&a_plot.seededImageData, &plot_seeds_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&a_plot.plantImageData, &plot_plant_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&a_plot.bloomImageData, &selection_bloom_image, StandardDimensionsX, StandardDimensionsY)
+
+				fmt.println("1plot ", a_plot.name, " id ", a_plot.plotImageData.texture.id)
+	}
 	ResizeAndBindImageData(&crate_red.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
 	ResizeAndBindImageData(&crate_red.innerImageData, &crate_seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
 	ResizeAndBindImageData(&crate_red.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
 	ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
+
+				fmt.println("crate id ", crate_red.outerImageData.texture.id)
+				fmt.println("crate bloom id ", crate_red.bloomImageData.texture.id)
 	
 	{	
 		// Setup gui
@@ -189,10 +217,16 @@ main :: proc () {
 		ground.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2)), (cast(f32)(screen_height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
 		grandma.centerPosition = raylib.Vector2{cast(f32)(screen_width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
-		plot_1.plotImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
-		plot_1.seededImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
-		plot_1.plantImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
-		plot_1.bloomImageData.centerPosition = raylib.Vector2{cast(f32)(plot_1.plotImageData.size.x/2), cast(f32)(plot_1.plotImageData.size.y/2)}
+		bias:= 0
+		for a_plot in plots {
+			a_plot.plotImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
+			a_plot.seededImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
+			a_plot.plantImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
+			a_plot.bloomImageData.centerPosition = raylib.Vector2{cast(f32)(a_plot.plotImageData.size.x/2), cast(f32)(a_plot.plotImageData.size.y/2 + cast(f32)bias)}
+			bias = bias + 100
+				fmt.println("2plot ", a_plot.name)
+		}
+				fmt.println("bias ", bias)
 		crate_red.outerImageData.centerPosition = raylib.Vector2{750,575}
 		crate_red.innerImageData.centerPosition = raylib.Vector2{750,575}
 		crate_red.bloomImageData.centerPosition = raylib.Vector2{750,575}
@@ -213,7 +247,9 @@ main :: proc () {
 		// Setup various fades
 		screenFade = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
 		crate_red.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
-		plot_1.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
+		for a_plot in plots {
+			a_plot.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
+		}
 		// Setup dialogue
 		SetupAllDialogue()
 	}
@@ -354,12 +390,15 @@ Draw :: proc () {
 		raylib.DrawTexture(ground.texture, x, y, raylib.WHITE)
 	}
 	{	// Plants
-		if(plot_1.state == 0){
-			x,y  := ToScreenOffsetPosition(plot_1.plotImageData)
-			raylib.DrawTexture(plot_1.plotImageData.texture, x, y, raylib.WHITE)
-		}else {
-			x,y  := ToScreenOffsetPosition(plot_1.plotImageData)
-			raylib.DrawTexture(plot_1.seededImageData.texture, x, y, raylib.WHITE)
+		for a_plot in plots {
+			fmt.println("draw plot ", a_plot.name, " state ", a_plot.state, " texture:", a_plot.plotImageData.texture.id)
+			if(a_plot.state == 0) {
+				x,y  := ToScreenOffsetPosition(a_plot.plotImageData)
+				raylib.DrawTexture(a_plot.plotImageData.texture, x, y, raylib.WHITE)
+			} else {
+				x,y  := ToScreenOffsetPosition(a_plot.seededImageData)
+				raylib.DrawTexture(a_plot.seededImageData.texture, x, y, raylib.WHITE)
+			}
 		}
 	}
 	{	// Player
@@ -424,12 +463,7 @@ HasHitTime :: proc(timeRemaining:^f32, deltaTime:f32) ->bool {
 	return timeRemaining^ <= 0
 }
 
-
-cleanup_texture :: proc(imageData:^ImageData, image:^raylib.Image, dimensionX:i32, dimensionY:i32) {
-	// This whole ordeal isn't really necessary since we are likely quiting the application
-  	raylib.UnloadTexture(imageData.texture)
-}
-@(deferred_in=cleanup_texture)
+// We just leak these. The get cleaned up when the process exits anyways. and they don't leak over time
 ResizeAndBindImageData :: proc(imageData:^ImageData, image:^raylib.Image, dimensionX:i32, dimensionY:i32) {
 	raylib.ImageResize(image, dimensionX, dimensionY)
 	texture := raylib.LoadTextureFromImage(image^)
