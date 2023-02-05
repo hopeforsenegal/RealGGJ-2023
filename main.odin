@@ -10,19 +10,16 @@ InputCooldownSeconds 	:: 0.4
 StandardDimensionsX 	:: 100
 StandardDimensionsY 	:: 100
 
-ColorHalfTransparent :: raylib.Color{255,255,255,120}
+DurationScreenFade			:: 3
+DurationSelectedCrateFade 	:: 1
+
+ColorHalfTransparent 	:: raylib.Color{255,255,255,120}
+ColorTransparent 		:: raylib.Color{1,1,1,0}
 
 TextAlignment :: enum {
 	Left, 
 	Center,
 	Right,
-}
-
-Items :: enum {
-	WateringCan, 
-	RedSeeds,
-	BlackSeeds,
-	GreenSeeds,
 }
 
 GUI :: struct {
@@ -47,7 +44,7 @@ InputScheme :: struct {
 	downButton2: 	raylib.KeyboardKey,
 	rightButton:	raylib.KeyboardKey,
 	rightButton2:	raylib.KeyboardKey,
-	interactButton:	raylib.KeyboardKey,
+	interactButton:		raylib.KeyboardKey,
 	interactButton2:	raylib.KeyboardKey,
 }
 
@@ -75,14 +72,19 @@ WateringCan :: struct {
   using imageData: 	ImageData,
 }
 
-Plant :: struct {
-  using imageData: 	ImageData,
+Plot :: struct {
+	plotImageData: 		ImageData,
+	seededImageData: 	ImageData,
+	plantImageData: 	ImageData,
+	bloomImageData: 	ImageData,
+	colorFadeBloom:		ColorFade,
 }
 
 Crate :: struct {
   outerImageData: 	ImageData,
   innerImageData: 	ImageData,
   bloomImageData: 	ImageData,
+  colorFadeBloom:	ColorFade,
   hovering:			bool,
   selected:			bool,
 }
@@ -97,10 +99,11 @@ ChatBubble :: struct{
 }
 
 ColorFade :: struct {
-	timerScreenFade: 	f32,
+	timerColorFade: 	f32,
 	initialTime: 		f32,
 	colorFrom: 			raylib.Color,
 	colorTo: 			raylib.Color,
+  	colorCurrent:		raylib.Color,
 }
 
 DialogueSegment :: struct {
@@ -114,22 +117,21 @@ character_player: 	CharacterPlayer
 grandma: 			GrandMa
 watering_can: 		WateringCan
 red_crate: 			Crate
-plant1: 			Plant
+plot1: 				Plot
 chat_br: 			ChatBubble
 screenFade: 		ColorFade
-screenFadeColor:	raylib.Color
 screen_height: 		i32
 screen_width: 		i32
 timerInputCooldown:			f32
 
 dialogue1: [4]DialogueSegment
 
-
 main :: proc () {
 	assert(NumberOfCharacters("thiss", 'x') == 0)
 	assert(NumberOfCharacters("thiss", 't') == 1)
 	assert(NumberOfCharacters("thiss", 's') == 2)
 	assert(NumberOfCharacters("thi\nss", '\n') == 1)
+
 	raylib.InitWindow(800, 600, "Altered Roots")
 	defer raylib.CloseWindow()
 	raylib.SetTargetFPS(60)
@@ -140,7 +142,7 @@ main :: proc () {
 	ground = Ground{}
 	character_player = CharacterPlayer{}
 	grandma = GrandMa{}
-	plant1 = Plant{}
+	plot1 = Plot{}
 	red_crate = Crate{}
 	{	// Load images
 		ground_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/ground.png")
@@ -151,12 +153,16 @@ main :: proc () {
 		defer raylib.UnloadImage(watering_can_image)	
 		grandma_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/grandma.png")
 		defer raylib.UnloadImage(grandma_image)
+		plot_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plot.png")
+		defer raylib.UnloadImage(plot_image)
+		seeds_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/seeds.png")
+		defer raylib.UnloadImage(seeds_image)
 		plant_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/plant.png")
 		defer raylib.UnloadImage(plant_image)
 		crate_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/crate.png")
 		defer raylib.UnloadImage(crate_image)
-		seed_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/seed.png")
-		defer raylib.UnloadImage(seed_image)
+		seed_icon_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/seed_icon.png")
+		defer raylib.UnloadImage(seed_icon_image)
 		selection_bloom_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/selection_bloom.png")
 		defer raylib.UnloadImage(selection_bloom_image)
 		chat_bottom_left_image := raylib.LoadImage("/Users/kvasall/Documents/Repos/Altered Roots/resources/chat_bottom_left.png")
@@ -170,20 +176,26 @@ main :: proc () {
 		ResizeAndBindImageData(&character_player, &character_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&watering_can, &watering_can_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2 - 10)
 		ResizeAndBindImageData(&grandma, &grandma_image, StandardDimensionsX, StandardDimensionsY)
-		ResizeAndBindImageData(&plant1, &plant_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&plot1.plotImageData, &plot_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&plot1.seededImageData, &seeds_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&plot1.plantImageData, &plant_image, StandardDimensionsX, StandardDimensionsY)
+		ResizeAndBindImageData(&plot1.bloomImageData, &selection_bloom_image, StandardDimensionsX, StandardDimensionsY)
 		ResizeAndBindImageData(&red_crate.outerImageData, &crate_image, cast(i32)character_player.size.x/2, cast(i32)character_player.size.y/2)
-		ResizeAndBindImageData(&red_crate.innerImageData, &seed_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
+		ResizeAndBindImageData(&red_crate.innerImageData, &seed_icon_image, cast(i32)character_player.size.x/4, cast(i32)character_player.size.y/4)
 		ResizeAndBindImageData(&red_crate.bloomImageData, &selection_bloom_image, cast(i32)character_player.size.x, cast(i32)character_player.size.y)
 		ResizeAndBindImageData(&chat_br, &chat_bottom_right_image, 200, 150)
 	}
 	defer raylib.UnloadTexture(ground.texture)
 	defer raylib.UnloadTexture(character_player.texture)
 	defer raylib.UnloadTexture(watering_can.texture)
+	defer raylib.UnloadTexture(plot1.plotImageData.texture)
+	defer raylib.UnloadTexture(plot1.seededImageData.texture)
+	defer raylib.UnloadTexture(plot1.plantImageData.texture)
+	defer raylib.UnloadTexture(plot1.bloomImageData.texture)
 	defer raylib.UnloadTexture(red_crate.outerImageData.texture)
 	defer raylib.UnloadTexture(red_crate.innerImageData.texture)
 	defer raylib.UnloadTexture(red_crate.bloomImageData.texture)
 	defer raylib.UnloadTexture(grandma.texture)
-	defer raylib.UnloadTexture(plant1.texture)
 	defer raylib.UnloadTexture(chat_br.texture)
 	{	
 		// Setup gui
@@ -193,7 +205,9 @@ main :: proc () {
 		ground.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2)), (cast(f32)(screen_height/2))}
 		character_player.centerPosition = raylib.Vector2{(cast(f32)(screen_width/2) - character_player.size.x/2), (cast(f32)(screen_height/2) - character_player.size.y/2)}
 		grandma.centerPosition = raylib.Vector2{cast(f32)(screen_width) - cast(f32)(grandma.size.x/2), cast(f32)(grandma.size.y/2) + 100}
-		plant1.centerPosition = raylib.Vector2{cast(f32)(plant1.size.x/2), cast(f32)(plant1.size.y/2)}
+		plot1.plotImageData.centerPosition = raylib.Vector2{cast(f32)(plot1.plotImageData.size.x/2), cast(f32)(plot1.plotImageData.size.y/2)}
+		plot1.seededImageData.centerPosition = raylib.Vector2{cast(f32)(plot1.plotImageData.size.x/2), cast(f32)(plot1.plotImageData.size.y/2)}
+		plot1.plantImageData.centerPosition = raylib.Vector2{cast(f32)(plot1.plotImageData.size.x/2), cast(f32)(plot1.plotImageData.size.y/2)}
 		red_crate.outerImageData.centerPosition = raylib.Vector2{750,575}
 		red_crate.innerImageData.centerPosition = raylib.Vector2{750,575}
 		red_crate.bloomImageData.centerPosition = raylib.Vector2{750,575}
@@ -211,8 +225,10 @@ main :: proc () {
 			.ENTER,
 			.SPACE,
 		}
-		// Setup screen fade
-		screenFade = MakeColorFade(3, raylib.BLACK, raylib.Color{1,1,1,0})
+		// Setup various fades
+		screenFade = MakeColorFade(DurationScreenFade, raylib.BLACK, ColorTransparent)
+		red_crate.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
+		plot1.colorFadeBloom = MakeColorFade(DurationSelectedCrateFade, raylib.WHITE, ColorTransparent)
 		// Setup dialogue
 		chat_br.dialogueIndex = -1
 		dialogue1[0] = DialogueSegment{text="Um...", timerText=3}
@@ -238,9 +254,9 @@ main :: proc () {
 Update :: proc (deltaTime:f32) {
     actions := GetUserActions(character_player);
 
-	if !HasHitTime(&screenFade.timerScreenFade, deltaTime) {
-		t := screenFade.timerScreenFade/ screenFade.initialTime
-		screenFadeColor = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
+	if !HasHitTime(&screenFade.timerColorFade, deltaTime) {
+		t := screenFade.timerColorFade/ screenFade.initialTime
+		screenFade.colorCurrent = ColorLerp(screenFade.colorTo, screenFade.colorFrom, t)
 	}else{
 		// Show first dialogue
 		if(chat_br.dialogueIndex < 0) {
@@ -249,7 +265,8 @@ Update :: proc (deltaTime:f32) {
 	}
 	if(chat_br.dialogueIndex >= 0){
 		if HasHitTime(&dialogue1[chat_br.dialogueIndex].timerText, deltaTime) {
-			fmt.println("dialogueIndex:", chat_br.dialogueIndex)
+			//fmt.println("dialogueIndex:", chat_br.dialogueIndex)
+			// TODO: we should probably fix this at some point
 			chat_br.dialogueIndex = chat_br.dialogueIndex + 1
 			if(chat_br.dialogueIndex >= len(dialogue1)) { 
 				chat_br.dialogueIndex = -1
@@ -313,6 +330,11 @@ Update :: proc (deltaTime:f32) {
 		red_crate.selected = true
 		// deselect others
 	}
+	if(red_crate.selected){
+		red_crate.colorFadeBloom.timerColorFade = red_crate.colorFadeBloom.timerColorFade - deltaTime
+		t := red_crate.colorFadeBloom.timerColorFade/ red_crate.colorFadeBloom.initialTime
+		red_crate.colorFadeBloom.colorCurrent = ColorLerp(red_crate.colorFadeBloom.colorTo, red_crate.colorFadeBloom.colorFrom, PingPong(t, 1))		
+	}
 	// Set watering can to player position
 	watering_can.centerPosition = character_player.centerPosition
 }
@@ -321,6 +343,10 @@ Draw :: proc () {
 	{	// Ground
 		x,y  := ToScreenOffsetPosition(ground)
 		raylib.DrawTexture(ground.texture, x, y, raylib.WHITE)
+	}
+	{	// Plants
+		x,y  := ToScreenOffsetPosition(plot1.plotImageData)
+		raylib.DrawTexture(plot1.plotImageData.texture, x, y, raylib.WHITE)
 	}
 	{	// Player
 		x,y := ToScreenOffsetPosition(character_player)
@@ -333,17 +359,13 @@ Draw :: proc () {
 		x,y := ToScreenOffsetPosition(grandma)
 		raylib.DrawTexture(grandma.texture, x, y, raylib.WHITE)
 	}
-	{	// Plants
-		x,y  := ToScreenOffsetPosition(plant1)
-		raylib.DrawTexture(plant1.texture, x, y, raylib.WHITE)
-	}
 	{	// Crate
-		if(red_crate.hovering){
+		if(red_crate.selected){
+			x,y  := ToScreenOffsetPosition(red_crate.bloomImageData)
+			raylib.DrawTexture(red_crate.bloomImageData.texture, x, y, red_crate.colorFadeBloom.colorCurrent)
+		}else if(red_crate.hovering){
 			x,y  := ToScreenOffsetPosition(red_crate.bloomImageData)
 			raylib.DrawTexture(red_crate.bloomImageData.texture, x, y, ColorHalfTransparent)
-		}
-		if(red_crate.selected){
-			// Do cool new stuff here
 		}
 		x,y  := ToScreenOffsetPosition(red_crate.outerImageData)
 		raylib.DrawTexture(red_crate.outerImageData.texture, x, y, raylib.WHITE)
@@ -369,8 +391,8 @@ Draw :: proc () {
 		GUI_ProgressBarVertical(raylib.Rectangle{45,40,5,50}, "", 1, 0, 1, false)
 	}
 	{	// Screen Fade
-		if(screenFade.timerScreenFade > 0){
-			raylib.DrawRectangle(0, 0, screen_width, screen_height, screenFadeColor)
+		if(screenFade.timerColorFade > 0){
+			raylib.DrawRectangle(0, 0, screen_width, screen_height, screenFade.colorCurrent)
 		}
 	}
 	{	// Debug
@@ -415,7 +437,16 @@ ResizeAndBindImageData :: proc(imageData:^ImageData, image:^raylib.Image, dimens
 }
 
 MakeColorFade :: proc(initialTime:f32, colorFrom: raylib.Color, colorTo:raylib.Color) -> ColorFade{
-	return ColorFade{initialTime, initialTime, colorFrom, colorTo}
+	return ColorFade{initialTime, initialTime, colorFrom, colorTo, colorFrom}
+}
+
+Repeat :: proc(t:f32, length:f32) ->f32 {
+    return clamp(t - math.floor(t / length) * length, 0, length)
+}
+
+PingPong :: proc(t:f32, length:f32) ->f32 {
+    t := Repeat(t, length * 2)
+    return length - abs(t - length)
 }
 
 Lerp :: proc(from:u8, to:u8, t:f32) ->u8 {
@@ -430,15 +461,14 @@ ColorLerp :: proc(from:raylib.Color, to:raylib.Color, t:f32) -> raylib.Color {
     return raylib.Color{r,g,b,a}
 }
 
-GUI_DrawSpeechBubble :: proc(imageData: ImageData, 
-					 	 	 text: string) {
+GUI_DrawSpeechBubble :: proc(imageData: ImageData, text: string) {
 	fontSize := gui.fontSize
 	topLeftX, topLeftY  := ToScreenOffsetPosition(imageData)
 	centerX := topLeftX + cast(i32)(imageData.size.x/2)
 	centerY := topLeftY + cast(i32)(imageData.size.y/2)
-	newText := strings.clone_to_cstring(text)
 	numberOfNewlines :=  NumberOfCharacters(text, '\n')
 	yBias := cast(i32)(numberOfNewlines>=1?numberOfNewlines*30: 20)
+	newText := strings.clone_to_cstring(text)
 	defer delete(newText)
 
 	raylib.DrawTexture(imageData.texture, topLeftX, topLeftY, raylib.WHITE)
